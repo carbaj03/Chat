@@ -1,6 +1,5 @@
 package com.acv.chat.domain.screen
 
-import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement.Absolute.spacedBy
@@ -18,24 +17,19 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import arrow.core.raise.effect
-import arrow.core.raise.fold
 import arrow.core.toNonEmptyListOrNull
 import arrow.optics.optics
 import coil.compose.rememberAsyncImagePainter
-import com.acv.chat.arrow.error.action
+import com.acv.chat.Navigator
+import com.acv.chat.arrow.error.onClick
 import com.acv.chat.arrow.optics.get
 import com.acv.chat.arrow.optics.invoke
 import com.acv.chat.components.BottomBar
@@ -63,15 +57,15 @@ import com.acv.chat.domain.App
 import com.acv.chat.domain.AppOptics
 import com.acv.chat.domain.AudioPlayer
 import com.acv.chat.domain.AudioRecorder
+import com.acv.chat.domain.DocumentService
+import com.acv.chat.domain.Media
 import com.acv.chat.domain.MediaService
 import com.acv.chat.domain.PhotoService
 import com.acv.chat.domain.Store
 import com.acv.chat.domain.screen
-import com.acv.chat.util.toUri
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.io.File
 
 enum class State {
   Searching, Thinking, Idle
@@ -81,14 +75,14 @@ enum class State {
   val topBar: TopBar,
   val bottomBar: BottomBar,
   val messages: List<Message>,
-  val files: List<File> = emptyList(),
+  val files: List<Media> = emptyList(),
   val input: BasicInput,
   val error: String? = null,
   val state: State,
   val scrollState: ScrollState,
-  override val init: () -> Unit,
+  override val create: () -> Unit,
   override val update: () -> Unit,
-  override val stop: () -> Unit
+  override val destroy: () -> Unit
 ) : Screen {
   companion object
 }
@@ -100,8 +94,8 @@ enum class State {
   companion object
 }
 
-context(Store<App>, PhotoService, MediaService, AudioPlayer, AudioRecorder, ChatService, AudioService)
-fun AppOptics.createHome(): Home = screen.home {
+context(AppOptics, Store<App>, PhotoService, MediaService, DocumentService, AudioPlayer, AudioRecorder, ChatService, AudioService, Navigator)
+fun HomeScreen(): Home = screen.home {
   val load: suspend () -> Unit = {
     delay(1000)
     messages set listOf(
@@ -109,7 +103,6 @@ fun AppOptics.createHome(): Home = screen.home {
         label = Text(value = "Assistant", style = Label, color = Color.BlueNavy),
         text = Text(value = "Hola My Friend")
       ),
-
       Message(
         label = Text(value = "Assistant", style = Label, color = Color.BlueNavy),
         text = Text(value = "Hola My Friend")
@@ -145,8 +138,11 @@ fun AppOptics.createHome(): Home = screen.home {
     )
   }
 
+
   Home(
-    topBar = TopBar(title = Text("Home")),
+    topBar = TopBar(
+      title = Text("Home")
+    ),
     bottomBar = BottomBar(
       input = OutlinedInput(
         text = Text(""),
@@ -154,52 +150,44 @@ fun AppOptics.createHome(): Home = screen.home {
       ),
       gallery = ButtonIcon(
         icon = Icon.Gallery,
-        onClick = action(
+        onClick = onClick(
+          action = {
+            val file = pickDocument()
+            files transform { it + file }
+          },
           onError = {
-            launch {
-              error set it.toString()
-              delay(1000)
-              nullableError set null
-            }
+            error set it.toString()
+            delay(1000)
+            nullableError set null
           }
-        ) {
-          val file = pickFromGallery()
-          files transform { it + file }
-        }
+        )
       ),
       photo = ButtonIcon(
         icon = Icon.Photo,
-        onClick = action(
+        onClick = onClick(
+          action = {
+            val file = takePhoto()
+            files transform { it + file }
+          },
           onError = {
-            launch {
-              nullableError set it.toString()
-              delay(1000)
-              nullableError set null
-            }
+            nullableError set it.toString()
+            delay(1000)
+            nullableError set null
           }
-        ) {
-          val file = takePhoto()
-          files transform { it + file }
-        }
+        )
       ),
       audio = ButtonIcon(
         icon = Icon.Record,
-        onClick = action(
-          onError = {
-            launch {
-              Log.e("ERROR", it.toString())
-              error set it.toString()
-              delay(1000)
-              nullableError set null
-            }
-          }
-        ) {
+        onClick = onClick {
           if (isRecording) {
             bottomBar.audio.icon set Icon.Record
             val audio = stopRecording()
             playAudio(audio)
             val text = transcript(audio)
-            input.text.value transform { "$it ${text.text}" }
+            input.text.value transform {
+              if (it.isNotEmpty()) "$it ${text.text}"
+              else text.text
+            }
           } else {
             bottomBar.audio.icon set Icon.CancelRecord
             startRecording()
@@ -208,67 +196,64 @@ fun AppOptics.createHome(): Home = screen.home {
       ),
       translation = ButtonIcon(
         icon = Icon.Translate,
-        onClick = action(
-          onError = {
-            launch {
-              Log.e("ERROR", it.toString())
-              error set it.toString()
-              delay(1000)
-              nullableError set null
+        onClick = onClick(
+          action = {
+            if (isRecording) {
+              bottomBar.audio.icon set Icon.Record
+              val audio = stopRecording()
+              playAudio(audio)
+              val text = translation(audio)
+              input.text.value transform { "$it ${text.text}" }
+            } else {
+              bottomBar.audio.icon set Icon.CancelRecord
+              startRecording()
             }
-          }
-        ) {
-          if (isRecording) {
-            bottomBar.audio.icon set Icon.Record
-            val audio = stopRecording()
-            playAudio(audio)
-            val text = translation(audio)
-            input.text.value transform { "$it ${text.text}" }
-          } else {
-            bottomBar.audio.icon set Icon.CancelRecord
-            startRecording()
-          }
-        }
+          },
+          onError = {
+            error set it.toString()
+            delay(1000)
+            nullableError set null
+          },
+        )
       ),
       send = ButtonIcon(
         icon = Icon.Add,
-        onClick = action(
+        onClick = onClick(
+          action = {
+            bottomBar.send.icon set Icon.Back
+            state set State.Thinking
+            input.enabled set false
+
+            val assistant = chat(
+              prompt = input.text.value.get(),
+              files = files.get().toNonEmptyListOrNull(),
+            )
+
+            messages transform { messages ->
+              messages + Message(
+                label = Text(value = "Me", style = Label, color = Color.Blue),
+                text = Text(value = input.text.value.get())
+              ) + Message(
+                label = Text(value = "Assistant", style = Label, color = Color.Blue),
+                text = Text(value = assistant)
+              )
+            }
+
+            scrollState.position set messages.get().size
+            state set State.Idle
+            bottomBar.send.icon set Icon.Add
+            files set emptyList()
+            input.text.value set ""
+            input.enabled set true
+          },
           onError = {
             Log.e("ERROR", it.toString())
-            launch {
-              bottomBar.send.icon set Icon.Add
-              nullableError set it.toString()
-              delay(1000)
-              nullableError set null
-            }
+            bottomBar.send.icon set Icon.Add
+            nullableError set it.toString()
+            delay(1000)
+            nullableError set null
           }
-        ) {
-          bottomBar.send.icon set Icon.Back
-          state set State.Thinking
-          input.enabled set false
-
-          val assistant = chat(
-            prompt = input.text.value.get(),
-            files = files.get().toNonEmptyListOrNull(),
-          )
-
-          messages transform { messages ->
-            messages + Message(
-              label = Text(value = "Me", style = Label, color = Color.Blue),
-              text = Text(value = input.text.value.get())
-            ) + Message(
-              label = Text(value = "Assistant", style = Label, color = Color.Blue),
-              text = Text(value = assistant)
-            )
-          }
-
-          scrollState.position set messages.get().size
-          state set State.Idle
-          bottomBar.send.icon set Icon.Add
-          files set emptyList()
-          input.text.value set ""
-          input.enabled set true
-        }
+        )
       ),
     ),
     messages = listOf(),
@@ -283,13 +268,13 @@ fun AppOptics.createHome(): Home = screen.home {
     ),
     state = State.Idle,
     scrollState = ScrollState(0, 0),
-    init = {
+    create = {
       launch { load() }
     },
     update = {
       launch { load() }
     },
-    stop = {
+    destroy = {
       coroutineContext.cancelChildren()
     }
   )
@@ -297,7 +282,6 @@ fun AppOptics.createHome(): Home = screen.home {
 
 @Composable
 operator fun Home.invoke() {
-  val context = LocalContext.current
   val snackbarHostState = remember { SnackbarHostState() }
   val lazyListState = rememberLazyListState(
     initialFirstVisibleItemIndex = scrollState.position,
@@ -305,7 +289,7 @@ operator fun Home.invoke() {
   )
 
   LaunchedEffect(Unit) {
-    init()
+    create()
   }
 
   LaunchedEffect(error) {
@@ -341,17 +325,16 @@ operator fun Home.invoke() {
             Spacer(Modifier.size(8.dp))
             Row(horizontalArrangement = spacedBy(8.dp)) {
               files.forEach { file ->
-                var uri by remember { mutableStateOf<Uri?>(null) }
-                LaunchedEffect(file) {
-                  effect { file.toUri(context) }.fold({ uri = null }, { uri = it })
-                }
-                uri?.let {
-                  Image(
-                    modifier = Modifier.size(64.dp).clip(RoundedCornerShape(4.dp)),
-                    contentScale = ContentScale.Crop,
-                    painter = rememberAsyncImagePainter(uri, onState = { }),
-                    contentDescription = null
-                  )
+                when (file) {
+                  is Media.Image -> {
+                    Image(
+                      modifier = Modifier.size(64.dp).clip(RoundedCornerShape(4.dp)),
+                      contentScale = ContentScale.Crop,
+                      painter = rememberAsyncImagePainter(file.file, onState = {}),
+                      contentDescription = null
+                    )
+                  }
+                  is Media.Pdf -> androidx.compose.material3.Text("PDF ${file.file.name}")
                 }
               }
             }

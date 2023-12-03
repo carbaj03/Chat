@@ -1,102 +1,32 @@
 package com.acv.chat.data.openai.assistant
 
-import com.acv.chat.data.openai.Parameters
+import com.acv.chat.data.openai.ModelId
+import com.acv.chat.data.openai.assistant.file.FileId
+import com.acv.chat.data.openai.assistant.runs.AssistantId
+import com.acv.chat.data.openai.assistant.runs.AssistantTool
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class CreateAssistantBetaRequest(
-  val model: String,
-  val name: String? = null,
-  val description: String? = null,
-  val instructions: String? = null,
-  val tools: List<Tool> = emptyList(),
-  val file_ids: List<String> = emptyList(),
-  val metadata: Map<String, String>? = null
+data class AssistantRequest(
+  @SerialName("model") val model: String? = null,
+  @SerialName("name") val name: String? = null,
+  @SerialName("description") val description: String? = null,
+  @SerialName("instructions") val instructions: String? = null,
+  @SerialName("tools") val tools: List<AssistantTool>? = null,
+  @SerialName("file_ids") val fileIds: List<FileId>? = null,
+  @SerialName("metadata") val metadata: Map<String, String>? = null
 )
 
 @Serializable
-data class Tool(
-  val type: String,
-  val function: Function? = null
-) {
-  companion object {
-    val CodeInterpreter = Tool(type = "code_interpreter")
-    val Retrieval = Tool(type = "retrieval")
-    fun function(
-      name: String,
-      description: String,
-      parameters: Parameters
-    ): Tool =
-      Tool(
-        type = "function",
-        function = Function(
-          name = name,
-          description = description,
-          parameters = parameters
-        )
-      )
-  }
-}
-
-//@Serializable
-//sealed interface Tool {
-//  val type: String
-//}
-//
-//@Serializable
-//data class CodeInterpreterTool(
-//  override val type: String = "code_interpreter"
-//) : Tool
-//
-//@Serializable
-//data class RetrievalTool(
-//  override val type: String = "retrieval"
-//) : Tool
-//
-//@Serializable
-//data class FunctionTool(
-//  override val type: String = "function",
-//  val function: Function
-//) : Tool
-
-@Serializable
-data class Function(
-  val description: String? = null,
-  val name: String,
-  val parameters: Parameters,
-  val file_ids: List<String> = emptyList()
+data class Assistant(
+  @SerialName("id") val id: AssistantId,
+  @SerialName("created_at") val createdAt: Long,
+  @SerialName("name") val name: String,
+  @SerialName("description") val description: String? = null,
+  @SerialName("model") val model: ModelId,
+  @SerialName("instructions") val instructions: String? = null,
+  @SerialName("tools") val tools: List<AssistantTool>,
+  @SerialName("file_ids") val fileIds: List<FileId>,
+  @SerialName("metadata") val metadata: Map<String, String>,
 )
-
-//@Serializable
-//data class Parameters(
-//  val type: String = "object",
-//  val properties: JsonObject? = null
-//)
-
-@Serializable
-data class JsonSchemaObject(
-  val type: String,
-  val format: String? = null,
-  val items: JsonSchemaObject? = null,
-  val properties: Map<String, JsonSchemaObject>? = null,
-  val required: List<String>? = null,
-  val additionalProperties: Boolean? = null
-)
-
-@Serializable
-data class AssistantObjectBeta(
-  val id: AssistantId,
-  val `object`: String = "assistant",
-  val created_at: Int,
-  val name: String? = null,
-  val description: String? = null,
-  val model: String,
-  val instructions: String? = null,
-  val tools: List<Tool>,
-  val file_ids: List<String>,
-  val metadata: Map<String, String>?
-)
-
-@Serializable
-@JvmInline
-value class AssistantId(val value: String)

@@ -5,16 +5,17 @@ import arrow.core.NonEmptyList
 import arrow.core.raise.Raise
 import arrow.core.raise.ensure
 import arrow.core.toNonEmptyListOrNull
-import com.acv.chat.arrow.error.catch
+import com.acv.chat.arrow.error.onError
+import com.acv.chat.data.openai.FileSource
 import com.acv.chat.data.openai.ModelId.Gpt4
 import com.acv.chat.data.openai.ModelId.Gpt4Vision
 import com.acv.chat.data.openai.OpenAIClient
-import com.acv.chat.data.openai.audio.FileSource
 import com.acv.chat.data.openai.chat.ChatMessage.Companion.User
 import com.acv.chat.data.openai.chat.chunk.ChatCompletionChunk
 import com.acv.chat.domain.DomainError
 import com.acv.chat.domain.DomainError.NetworkDomainError
 import com.acv.chat.domain.DomainError.UnknownDomainError
+import com.acv.chat.domain.Media
 import io.ktor.client.call.body
 import io.ktor.client.request.accept
 import io.ktor.client.request.forms.FormBuilder
@@ -48,7 +49,7 @@ interface ChatService {
   context(Raise<DomainError>)
   suspend fun chat(
     prompt: String,
-    files: NonEmptyList<File>? = null,
+    files: NonEmptyList<Media>? = null,
   ): String
 
   context(Raise<DomainError>)
@@ -56,7 +57,23 @@ interface ChatService {
     prompt: String,
     files: NonEmptyList<File>?,
   ): Flow<ChatCompletionChunk>
+}
 
+class ChatServiceMock : ChatService {
+
+  context(Raise<DomainError>)
+  override suspend fun chat(
+    prompt: String,
+    files: NonEmptyList<Media>?,
+  ): String =
+    "Prompt $prompt"
+
+  context(Raise<DomainError>)
+  override fun chatCompletions(
+    prompt: String,
+    files: NonEmptyList<File>?,
+  ): Flow<ChatCompletionChunk> =
+    flow { }
 }
 
 context(Counter, OpenAIClient)
@@ -66,9 +83,9 @@ class ChatApi : ChatService {
   context(Raise<DomainError>)
   override suspend fun chat(
     prompt: String,
-    files: NonEmptyList<File>?,
+    files: NonEmptyList<Media>?,
   ): String =
-    catch(
+    onError(
       onError = { raise(UnknownDomainError(it)) }
     ) {
       val model = files?.let { Gpt4Vision } ?: Gpt4
@@ -76,8 +93,17 @@ class ChatApi : ChatService {
       val prompts = buildList {
         add(TextPart(prompt))
         files?.toNonEmptyListOrNull()?.let {
-          val img = Base64.encodeToString(it.head.readBytes(), Base64.DEFAULT)
-          add(ImagePart("data:image/jpeg;base64,$img"))
+          it.forEach {
+            when (it) {
+              is Media.Image -> {
+                val img = Base64.encodeToString(it.file.readBytes(), Base64.DEFAULT)
+                add(ImagePart("data:image/jpeg;base64,$img"))
+              }
+              is Media.Pdf -> {
+
+              }
+            }
+          }
         }
       }
 
@@ -160,7 +186,7 @@ private const val STREAM_PREFIX = "data:"
 private const val STREAM_END_TOKEN = "$STREAM_PREFIX [DONE]"
 
 internal suspend inline fun <reified T> FlowCollector<T>.streamEventsFrom(response: HttpResponse) {
-  val channel: ByteReadChannel = response.body<ByteReadChannel>().also { println("1") }
+  val channel: ByteReadChannel = response.body<ByteReadChannel>()
   while (!channel.isClosedForRead) {
     val line = channel.readUTF8Line() ?: continue
     val value: T = when {

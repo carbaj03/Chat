@@ -1,18 +1,70 @@
 package com.acv.chat.data.openai.assistant;
 
+import com.acv.chat.data.openai.assistant.file.FileId
+import com.acv.chat.data.openai.assistant.runs.ThreadId
+import com.acv.chat.data.openai.assistant.thread.Role
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class ThreadMessage(
-  @SerialName("id") val id: String,
-  @SerialName("object") val `object`: String,
+  @SerialName("id") val id: MessageId,
   @SerialName("created_at") val createdAt: Int,
-  @SerialName("thread_id") val threadId: String,
-  @SerialName("role") val role: String,
-  @SerialName("content") val content: List<String>,
-  @SerialName("assistant_id") val assistantId: String?,
-  @SerialName("run_id") val runId: String?,
-  @SerialName("file_ids") val fileIds: List<String>?,
-  @SerialName("metadata") val metadata: Map<String, String>?
-) 
+  @SerialName("thread_id") val threadId: ThreadId,
+  @SerialName("role") val role: Role,
+  @SerialName("content") val content: List<MessageContent>,
+  @SerialName("assistant_id") val assistantId: String? = null,
+  @SerialName("run_id") val runId: String? = null,
+  @SerialName("file_ids") val fileIds: List<FileId>,
+  @SerialName("metadata") val metadata: Map<String, String>
+)
+
+@Serializable
+@JvmInline
+value class MessageId(public val id: String)
+
+
+@Serializable(with = MessageContentSerializer::class)
+sealed interface MessageContent
+
+@Serializable
+data class MessageTextContent(@SerialName("text") val text: String) : MessageContent
+
+data class TextContent(
+  @SerialName("value") val value: String,
+  @SerialName("annotations") val annotations: List<TextAnnotation>
+)
+
+@Serializable(with = TextAnnotationSerializer::class)
+sealed interface TextAnnotation
+
+@Serializable
+data class FileCitationAnnotation(
+  @SerialName("file_citation") val fileCitation: FileCitation,
+  @SerialName("start_index") val startIndex: Int,
+  @SerialName("end_index") val endIndex: Int
+) : TextAnnotation
+
+@Serializable
+data class FileCitation(
+  @SerialName("file") val fileId: FileId,
+  @SerialName("quote") val quote: String,
+)
+
+@Serializable
+data class FilePathAnnotation(
+  @SerialName("text") val text: String,
+  @SerialName("file_path") val filePath: FilePath,
+  @SerialName("start_index") val startIndex: Int,
+  @SerialName("end_index") val endIndex: Int
+) : TextAnnotation
+
+@Serializable
+data class FilePath(
+  @SerialName("path") val path: String
+)
+
+@Serializable
+data class MessageImageContent(
+  @SerialName("file_id") val fileId: FileId
+) : MessageContent

@@ -84,7 +84,8 @@ dependencies {
   ksp(libs.arrow.optics.ksp)
 
   implementation(libs.kotlinx.datetime)
-  implementation(libs.kotlinx.serialization)
+  implementation(libs.serialization.core)
+  implementation(libs.serialization.json)
   implementation(libs.okio)
 
   implementation(libs.ktor.client.core)

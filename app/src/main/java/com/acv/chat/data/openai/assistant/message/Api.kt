@@ -2,7 +2,9 @@ package com.acv.chat.data.openai.assistant.message
 
 import arrow.core.raise.Raise
 import arrow.core.raise.ensure
-import com.acv.chat.arrow.error.catch
+import com.acv.chat.arrow.error.onError
+import com.acv.chat.data.openai.assistant.MessageId
+import com.acv.chat.data.openai.assistant.runs.ThreadId
 import com.acv.chat.data.openai.chat.ChatRole
 import com.acv.chat.domain.DomainError
 import io.ktor.client.call.body
@@ -21,9 +23,9 @@ class ThreadMessageApi {
   context(Raise<DomainError>)
   suspend fun createMessage(
     prompt: String,
-    threadId: String
+    threadId: ThreadId,
   ): MessageResponse =
-    catch(
+    onError(
       onError = { raise(DomainError.UnknownDomainError(it)) }
     ) {
       val request = CreateMessageRequest(
@@ -32,8 +34,8 @@ class ThreadMessageApi {
         metadata = null,
       )
 
-      val response = client.post("threads/$threadId/messages") {
-        headers {  append("OpenAI-Beta", "assistants=v1")  }
+      val response = client.post("threads/${threadId.id}/messages") {
+        headers { append("OpenAI-Beta", "assistants=v1") }
         contentType(ContentType.Application.Json)
         setBody(request)
       }
@@ -47,14 +49,14 @@ class ThreadMessageApi {
 
   context(Raise<DomainError>)
   suspend fun get(
-    idThread: String,
-    idMessage: String,
+    threadId: ThreadId,
+    messageId: MessageId
   ): MessageResponse =
-    catch(
+    onError(
       onError = { raise(DomainError.UnknownDomainError(it)) }
     ) {
 
-      val response = client.get("threads/$idThread/messages/$idMessage") {
+      val response = client.get("threads/${threadId.id}/messages/${messageId.id}") {
         contentType(ContentType.Application.Json)
       }
 
@@ -67,14 +69,14 @@ class ThreadMessageApi {
 
   context(Raise<DomainError>)
   suspend fun all(
-    idThread: String,
+    threadId: ThreadId,
   ): MessageListResponse =
-    catch(
+    onError(
       onError = { raise(DomainError.UnknownDomainError(it)) }
     ) {
 
-      val response = client.get("threads/$idThread/messages") {
-        headers {  append("OpenAI-Beta", "assistants=v1")  }
+      val response = client.get("threads/${threadId.id}/messages") {
+        headers { append("OpenAI-Beta", "assistants=v1") }
         contentType(ContentType.Application.Json)
         url {
 //          parameters.append("limit", "0")

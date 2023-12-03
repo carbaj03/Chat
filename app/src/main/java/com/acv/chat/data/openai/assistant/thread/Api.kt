@@ -2,7 +2,8 @@ package com.acv.chat.data.openai.assistant.thread
 
 import arrow.core.raise.Raise
 import arrow.core.raise.ensure
-import com.acv.chat.arrow.error.catch
+import com.acv.chat.arrow.error.onError
+import com.acv.chat.data.openai.assistant.runs.ThreadId
 import com.acv.chat.domain.DomainError
 import io.ktor.client.call.body
 import io.ktor.client.request.get
@@ -19,10 +20,10 @@ class ThreadApi {
 
   context(Raise<DomainError>)
   suspend fun createThread(): ThreadResponse =
-    catch(
+    onError(
       onError = { raise(DomainError.UnknownDomainError(it)) }
     ) {
-      val request = ThreadCreateRequest()
+      val request = ThreadRequest()
 
       val response = client.post("threads") {
         headers {  append("OpenAI-Beta", "assistants=v1")  }
@@ -39,13 +40,13 @@ class ThreadApi {
 
   context(Raise<DomainError>)
   suspend fun get(
-    id: String
+    threadId: ThreadId
   ): ThreadResponse =
-    catch(
+    onError(
       onError = { raise(DomainError.UnknownDomainError(it)) }
     ) {
 
-      val response = client.get("threads/$id") {
+      val response = client.get("threads/${threadId.id}") {
         contentType(ContentType.Application.Json)
       }
 

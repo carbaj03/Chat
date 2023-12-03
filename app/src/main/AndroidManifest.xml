@@ -32,7 +32,7 @@
         </activity>
 
         <provider
-                android:name=".ComposeFileProvider"
+                android:name=".util.ComposeFileProvider"
                 android:authorities="${applicationId}.fileprovider"
                 android:grantUriPermissions="true"
                 android:exported="false">

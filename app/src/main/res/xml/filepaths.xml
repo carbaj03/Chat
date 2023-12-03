@@ -6,4 +6,10 @@
     <cache-path
             name="my_images"
             path="images/" />
+    <files-path
+            name="my_docs"
+            path="docs/" />
+    <cache-path
+            name="my_docs"
+            path="docs/" />
 </paths>

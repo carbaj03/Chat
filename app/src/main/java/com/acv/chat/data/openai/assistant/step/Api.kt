@@ -2,7 +2,7 @@ package com.acv.chat.data.openai.assistant.step
 
 import arrow.core.raise.Raise
 import arrow.core.raise.ensure
-import com.acv.chat.arrow.error.catch
+import com.acv.chat.arrow.error.onError
 import com.acv.chat.domain.DomainError
 import io.ktor.client.call.body
 import io.ktor.client.request.get
@@ -21,7 +21,7 @@ class RunStepApi {
     runId: String,
     stepId: String
   ): RunStepObjectBeta =
-    catch(
+    onError(
       onError = { raise(DomainError.UnknownDomainError(it)) }
     ) {
 

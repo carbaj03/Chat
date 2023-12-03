@@ -1,5 +1,7 @@
 package com.acv.chat.domain
 
+import arrow.core.raise.Raise
+
 sealed interface DomainError {
   data object Default : DomainError
   data object NotFile : DomainError
@@ -13,3 +15,7 @@ sealed interface DomainError {
     val message: String
   ) : DomainError
 }
+
+context(Raise<DomainError>)
+fun DomainError.raise(): DomainError =
+  raise(this)

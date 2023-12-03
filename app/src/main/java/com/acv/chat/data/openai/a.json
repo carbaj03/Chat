@@ -1,116 +1,38 @@
-[
-  {
-    "model": "gpt-3.5-turbo-1106",
-    "messages": [
-      {
-        "role": "user",
-        "content": "What's the weather like in San Francisco, Tokyo, and Paris?"
+{
+  "name": "weatherinfo",
+  "description": "Generated function for weatherinfo",
+  "parameters": {
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "type": "object",
+    "properties": {
+      "latitude": {
+        "type": "number"
       },
-      {
-        "role": "assistant",
-        "content": "",
-        "tool_calls": [
-          {
-            "id": "call_jzDyxLzPnGLZveHxQ3qbmOue",
-            "type": "function",
-            "function": {
-              "name": "currentWeather",
-              "arguments": "{\"location\": \"San Francisco\", \"unit\": \"celsius\"}"
-            }
-          },
-          {
-            "id": "call_hjErnIyMjokfePQYLWFhmMlh",
-            "type": "function",
-            "function": {
-              "name": "currentWeather",
-              "arguments": "{\"location\": \"Tokyo\", \"unit\": \"celsius\"}"
-            }
-          },
-          {
-            "id": "call_kTKtYwdQ5CAdoUCmZrLFMoG1",
-            "type": "function",
-            "function": {
-              "name": "currentWeather",
-              "arguments": "{\"location\": \"Paris\", \"unit\": \"celsius\"}"
-            }
-          }
-        ]
+      "longitude": {
+        "type": "number"
       },
-      {
-        "role": "tool",
-        "content": "{\"location\":\"San Francisco\",\"temperature\":\"72\",\"unit\":\"celsius\"}",
-        "name": "currentWeather",
-        "tool_call_id": "call_jzDyxLzPnGLZveHxQ3qbmOue"
+      "temperature": {
+        "if": {
+          "type": "string"
+        },
+        "else": {
+          "type": "null"
+        }
       },
-      {
-        "role": "tool",
-        "content": "{\"location\":\"Tokyo\",\"temperature\":\"10\",\"unit\":\"celsius\"}",
-        "name": "currentWeather",
-        "tool_call_id": "call_hjErnIyMjokfePQYLWFhmMlh"
-      },
-      {
-        "role": "tool",
-        "content": "{\"location\":\"Paris\",\"temperature\":\"22\",\"unit\":\"celsius\"}",
-        "name": "currentWeather",
-        "tool_call_id": "call_kTKtYwdQ5CAdoUCmZrLFMoG1"
+      "unit": {
+        "if": {
+          "type": "string"
+        },
+        "else": {
+          "type": "null"
+        },
+        "description": "fahrenheit or celsius"
       }
-    ]
-  },
-  {
-    "model": "gpt-3.5-turbo-1106",
-    "messages": [
-      {
-        "role": "user",
-        "content": "What's the weather like in San Francisco, Tokyo, and Paris?"
-      },
-      {
-        "role": "assistant",
-        "content": "",
-        "tool_calls": [
-          {
-            "id": "call_1mUow81jfWJkjIHnDvfbai4V",
-            "type": "function",
-            "function": {
-              "name": "WeatherInfo",
-              "arguments": "{\"location\": \"San Francisco\", \"unit\": \"celsius\"}"
-            }
-          },
-          {
-            "id": "call_g4np5NzrvJGn5s47xxl2me0D",
-            "type": "function",
-            "function": {
-              "name": "WeatherInfo",
-              "arguments": "{\"location\": \"Tokyo\", \"unit\": \"celsius\"}"
-            }
-          },
-          {
-            "id": "call_BWDpvMLavHJ0vuzjsczvgoMs",
-            "type": "function",
-            "function": {
-              "name": "WeatherInfo",
-              "arguments": "{\"location\": \"Paris\", \"unit\": \"celsius\"}"
-            }
-          }
-        ]
-      },
-      {
-        "role": "tool",
-        "content": "{\"location\":\"San Francisco\",\"temperature\":\"72\",\"unit\":\"celsius\"}",
-        "name": "WeatherInfo",
-        "tool_call_id": "call_1mUow81jfWJkjIHnDvfbai4V"
-      },
-      {
-        "role": "tool",
-        "content": "{\"location\":\"Tokyo\",\"temperature\":\"10\",\"unit\":\"celsius\"}",
-        "name": "WeatherInfo",
-        "tool_call_id": "call_g4np5NzrvJGn5s47xxl2me0D"
-      },
-      {
-        "role": "tool",
-        "content": "{\"location\":\"Paris\",\"temperature\":\"22\",\"unit\":\"celsius\"}",
-        "name": "WeatherInfo",
-        "tool_call_id": "call_BWDpvMLavHJ0vuzjsczvgoMs"
-      }
-    ]
+    },
+    "required": [
+      "latitude",
+      "longitude"
+    ],
+    "definitions": {}
   }
-]
+}

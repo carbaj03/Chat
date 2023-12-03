@@ -5,7 +5,7 @@ import android.media.MediaRecorder
 import android.os.Build
 import android.util.Log
 import arrow.core.raise.Raise
-import com.acv.chat.arrow.error.catch
+import com.acv.chat.arrow.error.onError
 import java.io.File
 
 interface AudioRecorder {
@@ -16,6 +16,20 @@ interface AudioRecorder {
 
   context(Raise<DomainError>)
   suspend fun stopRecording(): Audio
+}
+
+class AudioRecorderMock : AudioRecorder {
+  private var _isRecording = false
+  override val isRecording: Boolean get() = _isRecording
+
+  context(Raise<DomainError>)
+  override suspend fun startRecording() {
+    _isRecording = true
+  }
+
+  context(Raise<DomainError>)
+  override suspend fun stopRecording(): Audio =
+    Audio("mock").also { _isRecording = false }
 }
 
 class AndroidAudioRecorder(
@@ -43,17 +57,18 @@ class AndroidAudioRecorder(
   override val isRecording: Boolean get() = file != null
 
   context(Raise<DomainError>)
-  override suspend fun startRecording(): Unit = catch(onError = DomainError::UnknownDomainError) {
+  override suspend fun startRecording(): Unit = onError(onError = DomainError::UnknownDomainError) {
     val file = createFile()
-    recorder = mediaRecorder(file)
-    recorder!!.prepare()
-    recorder!!.start()
+    recorder = mediaRecorder(file).apply {
+      prepare()
+      start()
+    }
     this.file = file
 
   }
 
   context(Raise<DomainError>)
-  override suspend fun stopRecording(): Audio = catch(onError = DomainError::UnknownDomainError) {
+  override suspend fun stopRecording(): Audio = onError(onError = DomainError::UnknownDomainError) {
     file ?: throw Exception("There is not recording to stop")
     recorder!!.stop()
     recorder!!.reset()

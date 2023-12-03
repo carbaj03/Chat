@@ -2,10 +2,14 @@ package com.acv.chat.data.openai.assistant
 
 import arrow.core.raise.Raise
 import arrow.core.raise.ensure
-import com.acv.chat.arrow.error.catch
+import com.acv.chat.arrow.error.onError
 import com.acv.chat.data.openai.ModelId
 import com.acv.chat.data.openai.OpenAIClient
-import com.acv.chat.data.openai.assistant.message.ModifyAssistantRequest
+import com.acv.chat.data.openai.assistant.file.AssistantFile
+import com.acv.chat.data.openai.assistant.file.FileId
+import com.acv.chat.data.openai.assistant.runs.ActionSolver
+import com.acv.chat.data.openai.assistant.runs.AssistantId
+import com.acv.chat.data.openai.assistant.runs.AssistantTool
 import com.acv.chat.data.openai.chat.Counter
 import com.acv.chat.domain.DomainError
 import io.ktor.client.call.body
@@ -19,22 +23,25 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 
+@JvmInline
+value class Tools(val tools: List<AssistantTool>)
+
 context(Counter, OpenAIClient)
 class AssistantApi {
 
-  context(Raise<DomainError>)
+  context(Raise<DomainError>, ActionSolver)
   suspend fun createAssistant(
-    model: ModelId = ModelId.Gpt35,
-    tools: List<Tool> = listOf(Tool("code_interpreter")),
-  ): AssistantObjectBeta =
-    catch(
+    model: ModelId ,
+  ): Assistant =
+    onError(
       onError = { raise(DomainError.UnknownDomainError(it)) }
     ) {
-      val request = CreateAssistantBetaRequest(
+      val request = AssistantRequest(
         model = model.id,
         name = "My Assistant",
         instructions = "This is my assistant",
-        tools = tools,
+        tools = tools.tools,
+        fileIds = listOf(),
       )
 
       val response = client.post("assistants") {
@@ -47,17 +54,17 @@ class AssistantApi {
         raise(DomainError.NetworkDomainError(response.status.value, response.bodyAsText()))
       }
 
-      response.body<AssistantObjectBeta>()
+      response.body<Assistant>()
     }
 
   context(Raise<DomainError>)
   suspend fun get(
-    id: AssistantId,
-  ): AssistantObjectBeta =
-    catch(
+    assistantId: AssistantId,
+  ): Assistant =
+    onError(
       onError = { raise(DomainError.UnknownDomainError(it)) }
     ) {
-      val response = client.post("assistants/$id") {
+      val response = client.post("assistants/${assistantId.id}") {
         headers { append("OpenAI-Beta", "assistants=v1") }
         contentType(ContentType.Application.Json)
       }
@@ -66,23 +73,28 @@ class AssistantApi {
         raise(DomainError.NetworkDomainError(response.status.value, response.bodyAsText()))
       }
 
-      response.body<AssistantObjectBeta>()
+      response.body()
     }
 
   context(Raise<DomainError>)
   suspend fun modify(
-    id: AssistantId,
-    model: ModelId = ModelId.Gpt35,
-  ): AssistantObjectBeta =
-    catch(
+    assistantId: AssistantId,
+    model: ModelId ,
+    files: List<FileId>? = null,
+    tools: List<AssistantTool>? = null,
+  ): Assistant =
+    onError(
       onError = { raise(DomainError.UnknownDomainError(it)) }
     ) {
-      val request = ModifyAssistantRequest(
+      val request = AssistantRequest(
         model = model.id,
         name = "My Assistant",
+        instructions = "This is my assistant v2",
+//        tools = tools,
+        fileIds = files,
       )
 
-      val response = client.post("assistants/$id") {
+      val response = client.post("assistants/${assistantId.id}") {
         headers { append("OpenAI-Beta", "assistants=v1") }
         contentType(ContentType.Application.Json)
         setBody(request)
@@ -92,14 +104,14 @@ class AssistantApi {
         raise(DomainError.NetworkDomainError(response.status.value, response.bodyAsText()))
       }
 
-      response.body<AssistantObjectBeta>()
+      response.body()
     }
 
   context(Raise<DomainError>)
   suspend fun delete(
     id: AssistantId,
   ): DeletedAssistantResponse =
-    catch(
+    onError(
       onError = { raise(DomainError.UnknownDomainError(it)) }
     ) {
 
@@ -112,12 +124,12 @@ class AssistantApi {
         raise(DomainError.NetworkDomainError(response.status.value, response.bodyAsText()))
       }
 
-      response.body<DeletedAssistantResponse>()
+      response.body()
     }
 
   context(Raise<DomainError>)
   suspend fun assistants(): AssistantListResponse =
-    catch(
+    onError(
       onError = { raise(DomainError.UnknownDomainError(it)) }
     ) {
       val response = client.get("assistants") {
@@ -136,7 +148,7 @@ class AssistantApi {
   suspend fun file(
     id: AssistantId,
   ): AssistantFile =
-    catch(
+    onError(
       onError = { raise(DomainError.UnknownDomainError(it)) }
     ) {
 

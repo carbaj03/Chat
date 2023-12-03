@@ -2,7 +2,8 @@ package com.acv.chat.data.openai.audio
 
 import arrow.core.raise.Raise
 import arrow.core.raise.ensure
-import com.acv.chat.arrow.error.catch
+import com.acv.chat.arrow.error.onError
+import com.acv.chat.data.openai.FileSource
 import com.acv.chat.data.openai.OpenAIClient
 import com.acv.chat.data.openai.chat.appendFileSource
 import com.acv.chat.domain.Audio
@@ -27,12 +28,23 @@ interface AudioService {
   suspend fun translation(audio: Audio): Translation
 }
 
+class AudioServiceMock : AudioService {
+
+  context(Raise<DomainError>)
+  override suspend fun transcript(audio: Audio): Transcription =
+    Transcription("asfdsadf")
+
+  context(Raise<DomainError>)
+  override suspend fun translation(audio: Audio): Translation =
+    Translation("sfdsa")
+}
+
 context(OpenAIClient)
 class AudioOpenAI : AudioService {
 
   context(Raise<DomainError>)
   override suspend fun transcript(audio: Audio): Transcription =
-    catch(
+    onError(
       onError = { raise(DomainError.UnknownDomainError(it)) }
     ) {
       val path = audio.path.toPath()
@@ -56,7 +68,7 @@ class AudioOpenAI : AudioService {
 
   context(Raise<DomainError>)
   override suspend fun translation(audio: Audio): Translation =
-    catch(
+    onError(
       onError = { raise(DomainError.UnknownDomainError(it)) }
     ) {
       val path = audio.path.toPath()

@@ -1,5 +1,6 @@
-package com.acv.chat.data.openai.assistant
+package com.acv.chat.data.openai.assistant.file
 
+import com.acv.chat.data.openai.assistant.runs.AssistantId
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -10,6 +11,3 @@ data class AssistantFile(
   @SerialName("assistant_id") val assistantId: AssistantId
 )
 
-@Serializable
-@JvmInline
-value class FileId(val id: String)

@@ -9,7 +9,7 @@ import arrow.optics.optics
 data class Text(
   val value: String,
   val style: TextStyle = TextStyle.Body,
-  val color: Color = Color.None,
+  val color: Color = Color.Black,
 ) {
   companion object
 }

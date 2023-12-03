@@ -6,51 +6,46 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import arrow.core.raise.Raise
-import com.acv.chat.util.ComposeFileProvider
-import kotlinx.coroutines.CompletableDeferred
+import com.acv.chat.util.TempFileProvider
+import com.acv.chat.util.from
+import com.acv.chat.util.rememberDeferrable
 import java.io.File
 
 interface MediaService {
 
   context(Raise<DomainError>)
-  suspend fun pickFromGallery(): File
+  suspend fun pickFromGallery(): Media.Image
+}
+
+class MediaServiceMock : MediaService {
+
+  override suspend fun pickFromGallery(): Media.Image =
+    Media.Image(File(""))
 }
 
 @Composable
-fun rememberGalleryLauncher(): MediaService {
-  var def: CompletableDeferred<Uri?> by remember { mutableStateOf(CompletableDeferred()) }
+fun rememberGalleryLauncher(fileProvider: TempFileProvider): MediaService {
+  val result = rememberDeferrable<Uri?>()
   val context = LocalContext.current
 
   val galleryLauncher = rememberLauncherForActivityResult(
     contract = ActivityResultContracts.PickVisualMedia(),
-    onResult = {
-      it?.let { def.complete(it) } ?: def.complete(null)
-    }
+    onResult = { result.complete(it) }
   )
 
   return remember {
     object : MediaService {
 
       context(Raise<DomainError>)
-      override suspend fun pickFromGallery(): File {
+      override suspend fun pickFromGallery(): Media.Image {
         galleryLauncher.launch(PickVisualMediaRequest(ImageOnly))
-        return def.await()?.let {
-          context.contentResolver.openInputStream(it)?.use { input ->
-            ComposeFileProvider.getImageFile(context).apply {
-              outputStream().use { output ->
-                input.copyTo(output)
-              }
-            }
-          }
-        }.also {
-          def = CompletableDeferred()
-        } ?: raise(DomainError.UnknownDomainError("Photo not taken"))
+
+        val uri = result.await() ?: raise(DomainError.UnknownDomainError("Error picking document"))
+
+        return fileProvider.getImage().from(context, uri)
       }
     }
   }
