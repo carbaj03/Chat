@@ -1,6 +1,5 @@
 package com.acv.chat.domain.screen
 
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement.Absolute.spacedBy
 import androidx.compose.foundation.layout.Column
@@ -28,7 +27,6 @@ import androidx.compose.ui.unit.dp
 import arrow.core.toNonEmptyListOrNull
 import arrow.optics.optics
 import coil.compose.rememberAsyncImagePainter
-import com.acv.chat.Navigator
 import com.acv.chat.arrow.error.onClick
 import com.acv.chat.arrow.optics.get
 import com.acv.chat.arrow.optics.invoke
@@ -40,7 +38,7 @@ import com.acv.chat.components.Message
 import com.acv.chat.components.Text
 import com.acv.chat.components.TextStyle.Label
 import com.acv.chat.components.TopBar
-import com.acv.chat.components.audio
+import com.acv.chat.components.audioButton
 import com.acv.chat.components.icon
 import com.acv.chat.components.input
 import com.acv.chat.components.input.BasicInput
@@ -53,13 +51,16 @@ import com.acv.chat.components.send
 import com.acv.chat.components.value
 import com.acv.chat.data.openai.audio.AudioService
 import com.acv.chat.data.openai.chat.ChatService
+import com.acv.chat.domain.Analytics
 import com.acv.chat.domain.App
 import com.acv.chat.domain.AppOptics
 import com.acv.chat.domain.AudioPlayer
 import com.acv.chat.domain.AudioRecorder
 import com.acv.chat.domain.DocumentService
+import com.acv.chat.domain.Event
 import com.acv.chat.domain.Media
 import com.acv.chat.domain.MediaService
+import com.acv.chat.domain.Navigator
 import com.acv.chat.domain.PhotoService
 import com.acv.chat.domain.Store
 import com.acv.chat.domain.screen
@@ -80,8 +81,6 @@ enum class State {
   val error: String? = null,
   val state: State,
   val scrollState: ScrollState,
-  override val create: () -> Unit,
-  override val update: () -> Unit,
   override val destroy: () -> Unit
 ) : Screen {
   companion object
@@ -94,50 +93,20 @@ enum class State {
   companion object
 }
 
-context(AppOptics, Store<App>, PhotoService, MediaService, DocumentService, AudioPlayer, AudioRecorder, ChatService, AudioService, Navigator)
+context(AppOptics, Store<App>, Navigator, Analytics, PhotoService, MediaService, DocumentService, AudioPlayer, AudioRecorder, ChatService, AudioService)
 fun HomeScreen(): Home = screen.home {
-  val load: suspend () -> Unit = {
+  launch {
     delay(1000)
+
     messages set listOf(
       Message(
         label = Text(value = "Assistant", style = Label, color = Color.BlueNavy),
         text = Text(value = "Hola My Friend")
       ),
-      Message(
-        label = Text(value = "Assistant", style = Label, color = Color.BlueNavy),
-        text = Text(value = "Hola My Friend")
-      ),
-      Message(
-        label = Text(value = "Me", style = Label, color = Color.Blue),
-        text = Text(value = "Hola My Friend")
-      ),
-      Message(
-        label = Text(value = "Assistant", style = Label, color = Color.BlueNavy),
-        text = Text(value = "Hola My Friend")
-      ),
-      Message(
-        label = Text(value = "Me", style = Label, color = Color.Blue),
-        text = Text(value = "Hola My Friend")
-      ),
-      Message(
-        label = Text(value = "Assistant", style = Label, color = Color.BlueNavy),
-        text = Text(value = "Hola My Friend")
-      ),
-      Message(
-        label = Text(value = "Me", style = Label, color = Color.Blue),
-        text = Text(value = "Hola My Friend")
-      ),
-      Message(
-        label = Text(value = "Assistant", style = Label, color = Color.BlueNavy),
-        text = Text(value = "Hola My Friend")
-      ),
-      Message(
-        label = Text(value = "Me", style = Label, color = Color.Blue),
-        text = Text(value = "Hola My Friend")
-      ),
     )
   }
 
+  Event.Screen("Home").track()
 
   Home(
     topBar = TopBar(
@@ -148,7 +117,7 @@ fun HomeScreen(): Home = screen.home {
         text = Text(""),
         onChange = { bottomBar.input.text.value set it },
       ),
-      gallery = ButtonIcon(
+      galleryButton = ButtonIcon(
         icon = Icon.Gallery,
         onClick = onClick(
           action = {
@@ -162,7 +131,7 @@ fun HomeScreen(): Home = screen.home {
           }
         )
       ),
-      photo = ButtonIcon(
+      photoButton = ButtonIcon(
         icon = Icon.Photo,
         onClick = onClick(
           action = {
@@ -176,36 +145,39 @@ fun HomeScreen(): Home = screen.home {
           }
         )
       ),
-      audio = ButtonIcon(
+      audioButton = ButtonIcon(
         icon = Icon.Record,
         onClick = onClick {
           if (isRecording) {
-            bottomBar.audio.icon set Icon.Record
+            bottomBar.audioButton.icon set Icon.Record
+
             val audio = stopRecording()
-            playAudio(audio)
-            val text = transcript(audio)
+            audio.play()
+            val transcription = audio.transcript()
             input.text.value transform {
-              if (it.isNotEmpty()) "$it ${text.text}"
-              else text.text
+              if (it.isNotEmpty()) "$it ${transcription.text}"
+              else transcription.text
             }
           } else {
-            bottomBar.audio.icon set Icon.CancelRecord
+            bottomBar.audioButton.icon set Icon.CancelRecord
             startRecording()
           }
         }
       ),
-      translation = ButtonIcon(
+      translationButton = ButtonIcon(
         icon = Icon.Translate,
         onClick = onClick(
           action = {
+            Event.Click("Translate").track()
+
             if (isRecording) {
-              bottomBar.audio.icon set Icon.Record
+              bottomBar.audioButton.icon set Icon.Record
               val audio = stopRecording()
-              playAudio(audio)
-              val text = translation(audio)
+              audio.play()
+              val text = audio.translate()
               input.text.value transform { "$it ${text.text}" }
             } else {
-              bottomBar.audio.icon set Icon.CancelRecord
+              bottomBar.audioButton.icon set Icon.CancelRecord
               startRecording()
             }
           },
@@ -230,7 +202,7 @@ fun HomeScreen(): Home = screen.home {
             )
 
             messages transform { messages ->
-              messages + Message(
+              messages+ Message(
                 label = Text(value = "Me", style = Label, color = Color.Blue),
                 text = Text(value = input.text.value.get())
               ) + Message(
@@ -247,7 +219,6 @@ fun HomeScreen(): Home = screen.home {
             input.enabled set true
           },
           onError = {
-            Log.e("ERROR", it.toString())
             bottomBar.send.icon set Icon.Add
             nullableError set it.toString()
             delay(1000)
@@ -268,15 +239,7 @@ fun HomeScreen(): Home = screen.home {
     ),
     state = State.Idle,
     scrollState = ScrollState(0, 0),
-    create = {
-      launch { load() }
-    },
-    update = {
-      launch { load() }
-    },
-    destroy = {
-      coroutineContext.cancelChildren()
-    }
+    destroy = { coroutineContext.cancelChildren() }
   )
 }
 
@@ -287,10 +250,6 @@ operator fun Home.invoke() {
     initialFirstVisibleItemIndex = scrollState.position,
     initialFirstVisibleItemScrollOffset = scrollState.offset
   )
-
-  LaunchedEffect(Unit) {
-    create()
-  }
 
   LaunchedEffect(error) {
     error?.let { snackbarHostState.showSnackbar(it) } ?: snackbarHostState.currentSnackbarData?.dismiss()

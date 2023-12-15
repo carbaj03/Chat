@@ -1,10 +1,9 @@
-package com.acv.chat.data.openai
+package com.acv.chat.data.openai.common
 
 import android.util.Log
 import com.acv.chat.BuildConfig
 import com.acv.chat.data.openai.chat.JsonLenient
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.ProxyBuilder
 import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.auth.Auth
@@ -15,9 +14,7 @@ import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
-import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
-import io.ktor.serialization.kotlinx.KotlinxSerializationConverter
 import io.ktor.serialization.kotlinx.json.json
 import kotlin.time.Duration.Companion.seconds
 

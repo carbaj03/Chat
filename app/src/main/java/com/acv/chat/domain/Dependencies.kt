@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
-import com.acv.chat.data.openai.OpenAIClient
+import com.acv.chat.data.openai.common.OpenAIClient
 import com.acv.chat.data.openai.assistant.AssistantApi
 import com.acv.chat.data.openai.assistant.file.FileAssistantApi
 import com.acv.chat.data.openai.assistant.message.ThreadMessageApi
@@ -57,6 +57,8 @@ interface Dependencies {
   val weatherRepository: WeatherRepository
   val assistantWeather: AssistantWeather
 
+  val analytics: Analytics
+
   val store: Store<App>
 }
 
@@ -98,11 +100,14 @@ class DependenciesMock(
     get() = TODO("Not yet implemented")
   override val assistantWeather: AssistantWeather
     get() = TODO("Not yet implemented")
+
+  override val analytics: Analytics = AnalyticsMock()
+
   override val store: Store<App> = App()
 }
 
 @Composable
-fun createDependencies(): Dependencies {
+fun rememberDependencies(): Dependencies {
   val scope = rememberCoroutineScope()
   val context = LocalContext.current
 
@@ -137,6 +142,8 @@ fun createDependencies(): Dependencies {
 
       override val weatherRepository: WeatherRepository = WeatherRepositoryImpl(WeatherApi())
       override val assistantWeather: AssistantWeather = with(weatherRepository, assistantApi, threadApi, fileApi, threadMessageApi, runApi) { AssistantWeatherImpl() }
+
+      override val analytics: Analytics = FirebaseImpl(context)
 
       override val store: Store<App> = with(scope) { App() }
     }

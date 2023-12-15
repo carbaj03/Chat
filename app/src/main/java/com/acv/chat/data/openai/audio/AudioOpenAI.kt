@@ -2,9 +2,8 @@ package com.acv.chat.data.openai.audio
 
 import arrow.core.raise.Raise
 import arrow.core.raise.ensure
-import com.acv.chat.arrow.error.onError
-import com.acv.chat.data.openai.FileSource
-import com.acv.chat.data.openai.OpenAIClient
+import com.acv.chat.arrow.error.catch
+import com.acv.chat.data.FileSource
 import com.acv.chat.data.openai.chat.appendFileSource
 import com.acv.chat.domain.Audio
 import com.acv.chat.domain.DomainError
@@ -22,32 +21,32 @@ import okio.Path.Companion.toPath
 interface AudioService {
 
   context(Raise<DomainError>)
-  suspend fun transcript(audio: Audio): Transcription
+  suspend fun Audio.transcript(): Transcription
 
   context(Raise<DomainError>)
-  suspend fun translation(audio: Audio): Translation
+  suspend fun Audio.translate(): Translation
 }
 
 class AudioServiceMock : AudioService {
 
   context(Raise<DomainError>)
-  override suspend fun transcript(audio: Audio): Transcription =
+  override suspend fun Audio.transcript(): Transcription =
     Transcription("asfdsadf")
 
   context(Raise<DomainError>)
-  override suspend fun translation(audio: Audio): Translation =
+  override suspend fun Audio.translate(): Translation =
     Translation("sfdsa")
 }
 
-context(OpenAIClient)
+context(com.acv.chat.data.openai.common.OpenAIClient)
 class AudioOpenAI : AudioService {
 
   context(Raise<DomainError>)
-  override suspend fun transcript(audio: Audio): Transcription =
-    onError(
-      onError = { raise(DomainError.UnknownDomainError(it)) }
+  override suspend fun Audio.transcript(): Transcription =
+    catch(
+      onError = DomainError::UnknownDomainError
     ) {
-      val path = audio.path.toPath()
+      val path = path.toPath()
       val request = TranscriptionRequest(audio = FileSource(name = path.name, source = FileSystem.SYSTEM.source(path)))
       val response = client.submitFormWithBinaryData(url = "audio/transcriptions", formData = request.formData())
       ensure(response.status.isSuccess()) {
@@ -67,11 +66,11 @@ class AudioOpenAI : AudioService {
     }
 
   context(Raise<DomainError>)
-  override suspend fun translation(audio: Audio): Translation =
-    onError(
-      onError = { raise(DomainError.UnknownDomainError(it)) }
+  override suspend fun Audio.translate(): Translation =
+    catch(
+      onError = DomainError::UnknownDomainError
     ) {
-      val path = audio.path.toPath()
+      val path = path.toPath()
       val request = TranslationRequest(audio = FileSource(name = path.name, source = FileSystem.SYSTEM.source(path)))
       val response = client.submitFormWithBinaryData(url = "audio/translations", formData = request.formData())
 

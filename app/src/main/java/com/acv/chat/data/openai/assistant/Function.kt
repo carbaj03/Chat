@@ -1,31 +1,37 @@
 package com.acv.chat.data.openai.assistant
 
 import arrow.core.raise.Raise
-import com.acv.chat.arrow.error.onError
-import com.acv.chat.data.openai.Parameters
-import com.acv.chat.data.openai.assistant.runs.Action
-import com.acv.chat.data.openai.assistant.runs.AssistantTool
-import com.acv.chat.data.openai.assistant.runs.Function
+import com.acv.chat.arrow.error.catch
+import com.acv.chat.data.openai.assistant.AssistantTool.*
 import com.acv.chat.data.openai.assistant.runs.ToolOutput
+import com.acv.chat.data.openai.common.Parameters
 import com.acv.chat.data.schema.buildJsonSchema
 import com.acv.chat.domain.DomainError
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
+
+@Serializable
+data class Function(
+  @SerialName("name") val name: String,
+  @SerialName("description") val description: String,
+  @SerialName("parameters") val parameters: Parameters,
+)
 
 @OptIn(ExperimentalSerializationApi::class)
 inline fun <reified A> function(
   serializer: KSerializer<A>,
   name: String? = null,
   description: String? = null,
-): AssistantTool {
+): FunctionTool {
   val descriptor = serializer.descriptor
   val parameters = buildJsonSchema(descriptor)
   val fnName = descriptor.serialName.substringAfterLast(".").lowercase()
 
-  return AssistantTool(
-    type = "function",
+  return FunctionTool(
     function = Function(
       name = name ?: fnName,
       description = description ?: "Generated function for $fnName",
@@ -40,8 +46,8 @@ inline fun <reified A> functionWithAction(
   description: String? = null,
   crossinline block: suspend (A) -> String?
 ): FunctionWithAction =
-  onError(
-    onError = { DomainError.UnknownDomainError(it) }
+  catch(
+    onError = DomainError::UnknownDomainError
   ) {
     val serializer = serializer<A>()
     val tool = function<A>(serializer, name, description)
@@ -53,6 +59,6 @@ inline fun <reified A> functionWithAction(
   }
 
 data class FunctionWithAction(
-  val tool: AssistantTool,
+  val tool: FunctionTool,
   val action: Action,
 )

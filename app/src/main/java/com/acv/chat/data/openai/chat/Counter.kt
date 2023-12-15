@@ -1,6 +1,6 @@
 package com.acv.chat.data.openai.chat
 
-import com.acv.chat.data.openai.ModelId
+import com.acv.chat.data.openai.common.ModelId
 import com.acv.chat.data.openai.tokenizer.BpeLoader
 import com.acv.chat.data.openai.tokenizer.tokenizer
 

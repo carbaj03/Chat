@@ -1,4 +1,4 @@
-package com.acv.chat.data.openai
+package com.acv.chat.data.weather
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -23,3 +23,4 @@ data class WeatherDataDto(
   @SerialName("weathercode")
   val weatherCodes: List<Int>
 )
+

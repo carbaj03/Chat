@@ -7,8 +7,6 @@ import kotlinx.serialization.Serializable
 value class Purpose(val raw: String) {
   companion object {
     val fineTune = Purpose("fine-tune")
-    val fineTuneResults = Purpose("fine-tune-results")
     val assistants = Purpose("assistants")
-    val assistantsOutput = Purpose("assistants_output")
   }
 }

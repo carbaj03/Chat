@@ -5,13 +5,13 @@ import arrow.core.NonEmptyList
 import arrow.core.raise.Raise
 import arrow.core.raise.ensure
 import arrow.core.toNonEmptyListOrNull
-import com.acv.chat.arrow.error.onError
-import com.acv.chat.data.openai.FileSource
-import com.acv.chat.data.openai.ModelId.Gpt4
-import com.acv.chat.data.openai.ModelId.Gpt4Vision
-import com.acv.chat.data.openai.OpenAIClient
+import com.acv.chat.arrow.error.catch
+import com.acv.chat.data.FileSource
 import com.acv.chat.data.openai.chat.ChatMessage.Companion.User
 import com.acv.chat.data.openai.chat.chunk.ChatCompletionChunk
+import com.acv.chat.data.openai.common.ModelId.Gpt4
+import com.acv.chat.data.openai.common.ModelId.Gpt4Vision
+import com.acv.chat.data.openai.common.OpenAIClient
 import com.acv.chat.domain.DomainError
 import com.acv.chat.domain.DomainError.NetworkDomainError
 import com.acv.chat.domain.DomainError.UnknownDomainError
@@ -85,8 +85,8 @@ class ChatApi : ChatService {
     prompt: String,
     files: NonEmptyList<Media>?,
   ): String =
-    onError(
-      onError = { raise(UnknownDomainError(it)) }
+    catch(
+      onError = ::UnknownDomainError
     ) {
       val model = files?.let { Gpt4Vision } ?: Gpt4
 

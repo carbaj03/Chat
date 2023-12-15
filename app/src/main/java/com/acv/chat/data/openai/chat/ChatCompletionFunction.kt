@@ -1,6 +1,6 @@
 package com.acv.chat.data.openai.chat
 
-import com.acv.chat.data.openai.Parameters
+import com.acv.chat.data.openai.common.Parameters
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 

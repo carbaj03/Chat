@@ -3,12 +3,9 @@
 package com.acv.chat.domain
 
 import arrow.optics.optics
-import com.acv.chat.Navigator
-import com.acv.chat.NavigatorImpl
 import com.acv.chat.components.Theme
 import com.acv.chat.domain.screen.Screen
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 
 typealias AppOptics = App.Companion
 

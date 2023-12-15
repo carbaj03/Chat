@@ -1,6 +1,6 @@
 package com.acv.chat.data.openai.tokenizer
 
-import com.acv.chat.data.openai.ModelId
+import com.acv.chat.data.openai.common.ModelId
 import okio.ByteString
 import okio.ByteString.Companion.encodeUtf8
 

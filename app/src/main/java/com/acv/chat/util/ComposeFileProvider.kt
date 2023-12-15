@@ -7,7 +7,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.FileProvider
 import arrow.core.raise.Raise
 import com.acv.chat.R
-import com.acv.chat.arrow.error.onError
+import com.acv.chat.arrow.error.catch
 import com.acv.chat.domain.DomainError
 import com.acv.chat.domain.Media
 import com.acv.chat.util.ComposeFileProvider.Companion.fileProvider
@@ -37,7 +37,7 @@ class ComposeFileProvider : FileProvider(R.xml.filepaths) {
 
 context(Raise<DomainError>)
 suspend fun Media.Image.toUri(context: Context): Uri = suspendCancellableCoroutine { cc ->
-  onError(DomainError::UnknownDomainError) {
+  catch(DomainError::UnknownDomainError) {
     cc.resume(FileProvider.getUriForFile(context, context.fileProvider, file))
   }
 }

@@ -2,7 +2,13 @@ package com.acv.chat.data.openai.assistant.runs
 
 import arrow.core.raise.Raise
 import arrow.core.raise.ensure
-import com.acv.chat.arrow.error.onError
+import com.acv.chat.arrow.error.catch
+import com.acv.chat.data.openai.assistant.ActionSolver
+import com.acv.chat.data.openai.assistant.AssistantApi
+import com.acv.chat.data.openai.assistant.beta
+import com.acv.chat.data.openai.assistant.message.ThreadMessageApi
+import com.acv.chat.data.openai.assistant.thread.ThreadApi
+import com.acv.chat.data.openai.assistant.thread.ThreadRequest
 import com.acv.chat.domain.DomainError
 import io.ktor.client.call.body
 import io.ktor.client.request.get
@@ -14,16 +20,19 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 
-context(com.acv.chat.data.openai.chat.Counter, com.acv.chat.data.openai.OpenAIClient)
+import com.acv.chat.data.openai.common.OpenAIClient
+import com.acv.chat.data.openai.chat.Counter
+
+context(Counter, OpenAIClient)
 class RunApi {
 
   context(Raise<DomainError>)
   suspend fun createAndRun(
-    assistantId : String,
-    thread: ThreadObject
+    assistantId: String,
+    thread: ThreadRequest
   ): Run =
-    onError(
-      onError = { raise(DomainError.UnknownDomainError(it)) }
+    catch(
+      onError = DomainError::UnknownDomainError
     ) {
       val request = CreateThreadAndRunBetaRequest(
         assistantId,
@@ -31,7 +40,7 @@ class RunApi {
       )
 
       val response = client.post("threads/runs") {
-        headers {  append("OpenAI-Beta", "assistants=v1")  }
+        headers { beta() }
         contentType(ContentType.Application.Json)
         setBody(request)
       }
@@ -45,18 +54,18 @@ class RunApi {
 
   context(Raise<DomainError>)
   suspend fun createRun(
-    assistantId : AssistantId,
+    assistantId: AssistantId,
     threadId: ThreadId,
   ): Run =
-    onError(
-      onError = { raise(DomainError.UnknownDomainError(it)) }
+    catch(
+      onError = DomainError::UnknownDomainError
     ) {
       val request = RunRequest(
-       assistantId =  assistantId
+        assistantId = assistantId
       )
 
       val response = client.post("threads/${threadId.id}/runs") {
-        headers {  append("OpenAI-Beta", "assistants=v1")  }
+        headers { beta() }
         contentType(ContentType.Application.Json)
         setBody(request)
       }
@@ -70,15 +79,15 @@ class RunApi {
 
   context(Raise<DomainError>)
   suspend fun getRun(
-    threadId: ThreadId,
     runId: RunId,
+    threadId: ThreadId,
   ): Run =
-    onError(
-      onError = { raise(DomainError.UnknownDomainError(it)) }
+    catch(
+      onError = DomainError::UnknownDomainError
     ) {
 
       val response = client.get("threads/${threadId.id}/runs/${runId.id}") {
-        headers {  append("OpenAI-Beta", "assistants=v1")  }
+        headers { beta() }
         contentType(ContentType.Application.Json)
       }
 
@@ -89,20 +98,19 @@ class RunApi {
       response.body<Run>()
     }
 
-
   context(Raise<DomainError>)
   suspend fun tools(
     threadId: String,
     runId: String,
   ): Run =
-    onError(
-      onError = { raise(DomainError.UnknownDomainError(it)) }
+    catch(
+      onError = DomainError::UnknownDomainError
     ) {
 
       val request = ToolOutputsRequest(listOf())
 
       val response = client.get("threads/$threadId/runs/$runId/submit_tool_outputs") {
-        headers {  append("OpenAI-Beta", "assistants=v1")  }
+        headers { beta() }
         contentType(ContentType.Application.Json)
         setBody(request)
       }
@@ -114,17 +122,16 @@ class RunApi {
       response.body()
     }
 
-
   context(Raise<DomainError>)
   suspend fun cancel(
     threadId: ThreadId,
     runId: RunId,
   ): Run =
-    onError(
-      onError = { raise(DomainError.UnknownDomainError(it)) }
+    catch(
+      onError = DomainError::UnknownDomainError
     ) {
       val response = client.get("threads/${threadId.id}/runs/${runId.id}/cancel") {
-        headers {  append("OpenAI-Beta", "assistants=v1")  }
+        headers { beta() }
         contentType(ContentType.Application.Json)
       }
 
@@ -137,18 +144,18 @@ class RunApi {
 
   context(Raise<DomainError>)
   suspend fun submitToolOutputs(
-    treadId: ThreadId,
     runId: RunId,
-    outputs : List<ToolOutput>
+    treadId: ThreadId,
+    outputs: List<ToolOutput>
   ): Run =
-    onError(
-      onError = { raise(DomainError.UnknownDomainError(it)) }
+    catch(
+      onError = DomainError::UnknownDomainError
     ) {
 
       val request = ToolOutputsRequest(outputs)
 
       val response = client.post("threads/${treadId.id}/runs/${runId.id}/submit_tool_outputs") {
-        headers {  append("OpenAI-Beta", "assistants=v1")  }
+        headers { beta() }
         contentType(ContentType.Application.Json)
         setBody(request)
       }
@@ -159,5 +166,14 @@ class RunApi {
 
       response.body<Run>()
     }
+}
 
+class AssistantOAI(
+  val assistantId: AssistantId,
+  val threadId: ThreadId,
+)
+
+context(Raise<DomainError>, RunApi, AssistantApi, ThreadApi, ThreadMessageApi, ActionSolver)
+suspend fun AssistantOAI.run() {
+  createRun(assistantId, threadId)()
 }

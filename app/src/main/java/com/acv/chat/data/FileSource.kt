@@ -1,4 +1,4 @@
-package com.acv.chat.data.openai;
+package com.acv.chat.data;
 
 import okio.FileSystem
 import okio.Path

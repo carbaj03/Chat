@@ -1,17 +1,22 @@
 package com.acv.chat.arrow.error
 
-import arrow.core.Either
 import arrow.core.nonFatalOrThrow
 import arrow.core.raise.Raise
+import arrow.core.raise.RaiseDSL
 import arrow.core.raise.effect
 import arrow.core.raise.fold
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import kotlin.experimental.ExperimentalTypeInference
 
 context(Raise<A>)
-inline fun <A, B> onError(onError: (String) -> A, f: () -> B): B =
+@RaiseDSL
+@JvmName("catchReified")
+inline fun <reified T : Throwable, A> catch(catch: (t: T) -> A, block: () -> A): A =
+  arrow.core.raise.catch(block) { t: Throwable -> if (t is T) raise(catch(t)) else throw t }
+
+context(Raise<A>)
+inline fun <A, B> catch(onError: (String) -> A, f: () -> B): B =
   try {
     f()
   } catch (t: Throwable) {

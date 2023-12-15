@@ -1,8 +1,8 @@
 package com.acv.chat.data.openai.audio;
 
-import com.acv.chat.data.openai.FileSource
-import com.acv.chat.data.openai.ModelId;
-import com.acv.chat.data.openai.ModelId.Whisper1
+import com.acv.chat.data.FileSource
+import com.acv.chat.data.openai.common.ModelId;
+import com.acv.chat.data.openai.common.ModelId.Whisper1
 
 data class TranscriptionRequest(
   val audio: FileSource,

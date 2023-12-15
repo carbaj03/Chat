@@ -1,8 +1,7 @@
 package com.acv.chat.data.openai.file
 
 import arrow.core.raise.Raise
-import com.acv.chat.arrow.error.onError
-import com.acv.chat.data.openai.OpenAIClient
+import com.acv.chat.arrow.error.catch
 import com.acv.chat.data.openai.assistant.file.FileId
 import com.acv.chat.data.openai.chat.appendFileSource
 import com.acv.chat.domain.DomainError
@@ -12,15 +11,16 @@ import io.ktor.client.request.forms.formData
 import io.ktor.client.request.forms.submitFormWithBinaryData
 import io.ktor.client.request.get
 
-context(OpenAIClient)
+
+context(com.acv.chat.data.openai.common.OpenAIClient)
 class FilesApi {
 
   context(Raise<DomainError>)
-  suspend fun file(
+  suspend fun upload(
     request: FileUpload
   ): File =
-    onError(
-      onError = { raise(DomainError.UnknownDomainError(it)) }
+    catch(
+      onError = DomainError::UnknownDomainError
     ) {
       val response = client.submitFormWithBinaryData(
         url = "files",
@@ -35,8 +35,8 @@ class FilesApi {
 
   context(Raise<DomainError>)
   suspend fun files(): ListResponseFile =
-    onError(
-      onError = { raise(DomainError.UnknownDomainError(it)) }
+    catch(
+      onError = DomainError::UnknownDomainError
     ) {
       val response = client.get("files")
 
@@ -45,8 +45,8 @@ class FilesApi {
 
   context(Raise<DomainError>)
   suspend fun file(fileId: FileId): File =
-    onError(
-      onError = { raise(DomainError.UnknownDomainError(it)) }
+    catch(
+      onError = DomainError::UnknownDomainError
     ) {
       val response = client.get("files/${fileId.id}")
       response.body()
@@ -54,8 +54,8 @@ class FilesApi {
 
   context(Raise<DomainError>)
   suspend fun delete(fileId: FileId): DeletionStatus =
-    onError(
-      onError = { raise(DomainError.UnknownDomainError(it)) }
+    catch(
+      onError = DomainError::UnknownDomainError
     ) {
       val response = client.delete("files/${fileId.id}")
       response.body()
@@ -63,8 +63,8 @@ class FilesApi {
 
   context(Raise<DomainError>)
   suspend fun download(fileId: FileId): ByteArray =
-    onError(
-      onError = { raise(DomainError.UnknownDomainError(it)) }
+    catch(
+      onError = DomainError::UnknownDomainError
     ) {
       val response = client.get("files/${fileId.id}/content")
       response.body()

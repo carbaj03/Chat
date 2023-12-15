@@ -1,6 +1,7 @@
 package com.acv.chat.data.openai.assistant.runs
 
-import com.acv.chat.data.openai.ModelId
+import com.acv.chat.data.openai.common.ModelId
+import com.acv.chat.data.openai.assistant.AssistantTool
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 

@@ -1,9 +1,8 @@
 package com.acv.chat.data.openai.assistant
 
-import com.acv.chat.data.openai.ModelId
+import com.acv.chat.data.openai.common.ModelId
 import com.acv.chat.data.openai.assistant.file.FileId
 import com.acv.chat.data.openai.assistant.runs.AssistantId
-import com.acv.chat.data.openai.assistant.runs.AssistantTool
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 

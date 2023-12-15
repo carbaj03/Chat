@@ -1,9 +1,18 @@
 package com.acv.chat.data.openai.assistant.thread
 
-import com.acv.chat.data.openai.assistant.RoleSerializer
+import com.acv.chat.data.openai.common.Role
 import com.acv.chat.data.openai.assistant.file.FileId
+import com.acv.chat.data.openai.assistant.runs.ThreadId
+import com.acv.chat.data.openai.assistant.thread.Thread
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+
+@Serializable
+data class Thread(
+  @SerialName("id") val id: ThreadId,
+  @SerialName("created_at") val createdAt: Int,
+  @SerialName("metadata") val metadata: Map<String, String>? = null
+)
 
 @Serializable
 data class ThreadRequest(
@@ -19,11 +28,4 @@ data class ThreadMessage(
   @SerialName("metadata") val metadata: Map<String, String>? = null,
 )
 
-@Serializable(with = RoleSerializer::class)
-sealed class Role(val role: String) {
-  data object System : Role("system")
-  data object User : Role("user")
-  data object Assistant : Role("assistant")
-  data object Function : Role("function")
-  data object Tool : Role("tool")
-}
+operator fun Thread.invoke(block : Thread.() -> Unit) = block(this)

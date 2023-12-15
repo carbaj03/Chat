@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "434581627303",
+    "project_id": "mindjournal-7936c",
+    "storage_bucket": "mindjournal-7936c.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:434581627303:android:66a11b57a777b9329c9682",
+        "android_client_info": {
+          "package_name": "com.acv.mindjournal"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC7jm21HL4pj8iMjuf2RHkHKBtWbhFxrwM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

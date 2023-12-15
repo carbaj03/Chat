@@ -1,10 +1,9 @@
-package com.acv.chat.data.openai.assistant.runs
+package com.acv.chat.data.openai.assistant
 
 import arrow.core.raise.Raise
 import arrow.core.raise.either
-import com.acv.chat.data.openai.assistant.FunctionWithAction
-import com.acv.chat.data.openai.assistant.Tools
-import com.acv.chat.data.openai.assistant.functionWithAction
+import com.acv.chat.data.openai.assistant.runs.ToolCall
+import com.acv.chat.data.openai.assistant.runs.ToolOutput
 import com.acv.chat.domain.DomainError
 
 interface ActionSolver {
@@ -12,14 +11,8 @@ interface ActionSolver {
 
   val tools get() = Tools(scope.actions.map { it.tool } + scope.tools)
 
-  suspend operator fun List<ToolCall>.invoke(): List<ToolOutput> =
-    map { tool ->
-      scope.actions.first { call ->
-        call.tool.function?.name == tool.function.name
-      }.let {
-        it.action(tool.id, tool.function.arguments)
-      }
-    }
+  context(Raise<DomainError>)
+  suspend fun solve(toolCalls: List<ToolCall>): List<ToolOutput>
 }
 
 class ActionScope {
@@ -40,10 +33,12 @@ inline fun <reified A> ActionScope.add(
   )
 }
 
-fun ActionScope.add(
-  tool: AssistantTool
-) {
-  tools.add(tool)
+fun ActionScope.addRetrievalTool() {
+  tools.add(AssistantTool.RetrievalTool)
+}
+
+fun ActionScope.addCodeInterpreter() {
+  tools.add(AssistantTool.CodeInterpreter)
 }
 
 fun actionSolver(block: ActionScope.() -> Unit): ActionSolver =
@@ -53,6 +48,14 @@ fun actionSolver(block: ActionScope.() -> Unit): ActionSolver =
         val scope = ActionScope()
         scope.block()
         return scope
+      }
+
+    context(Raise<DomainError>) override suspend fun solve(toolCalls: List<ToolCall>): List<ToolOutput> =
+      toolCalls.map { tool ->
+        scope.actions
+          .firstOrNull { it.tool.function.name == tool.function.name }
+          ?.let { it.action(tool.id, tool.function.arguments) }
+          ?: raise(DomainError.UnknownDomainError("No action found for ${tool.function.name}"))
       }
   }
 

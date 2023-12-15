@@ -1,13 +1,21 @@
 package com.acv.chat.data.openai.assistant.runs
 
-import com.acv.chat.data.openai.ModelId
-import com.acv.chat.data.openai.Parameters
+import arrow.core.raise.Raise
+import com.acv.chat.data.openai.assistant.ActionSolver
+import com.acv.chat.data.openai.assistant.AssistantTool
+import com.acv.chat.data.openai.common.ModelId
+import com.acv.chat.domain.DomainError
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 data class Run(
-  @SerialName("id") val id: RunId,
+  @SerialName("id") val runId: RunId,
   @SerialName("created_at") val createdAt: Int,
   @SerialName("thread_id") val threadId: ThreadId,
   @SerialName("assistant_id") val assistantId: AssistantId,
@@ -39,41 +47,28 @@ data class Run(
   }
 }
 
-@Serializable
-data class AssistantTool(
-  @SerialName("type") val type: String ,
-  @SerialName("function") val function: Function? = null,
-)
+@OptIn(ExperimentalSerializationApi::class)
+@Serializer(forClass = Run.Status::class)
+object StatusSerializer : KSerializer<Run.Status> {
+  override fun serialize(encoder: Encoder, value: Run.Status) {
+    encoder.encodeString(value.value)
+  }
 
-val codeInterpreter = AssistantTool("code_interpreter")
-val retrieval = AssistantTool("retrieval")
-
-//@Serializable(with = AssistantToolSerializer::class)
-//sealed class AssistantTool() {
-//
-//  @Serializable
-//  data class CodeInterpreter(
-//    @SerialName("type") val type: String = "code_interpreter",
-//  ) : AssistantTool()
-//
-//  @Serializable
-//  data class RetrievalTool(
-//    @SerialName("type") val type: String = "retrieval",
-//  ) : AssistantTool()
-//
-//  @Serializable
-//  class FunctionTool(
-//    @SerialName("type") val type: String = "function",
-//    @SerialName("function") val function: Function,
-//  ) : AssistantTool()
-//}
-
-@Serializable
-data class Function(
-  @SerialName("name") val name: String,
-  @SerialName("description") val description: String,
-  @SerialName("parameters") val parameters: Parameters,
-)
+  override fun deserialize(decoder: Decoder): Run.Status {
+    val value = decoder.decodeString()
+    return when (value) {
+      "queued" -> Run.Status.Queued
+      "in_progress" -> Run.Status.InProgress
+      "requires_action" -> Run.Status.RequiresAction
+      "cancelled" -> Run.Status.Cancelled
+      "cancelling" -> Run.Status.Cancelling
+      "failed" -> Run.Status.Failed
+      "completed" -> Run.Status.Completed
+      "expired" -> Run.Status.Expired
+      else -> throw IllegalArgumentException("Unknown Status value: $value")
+    }
+  }
+}
 
 @Serializable
 @JvmInline
@@ -89,30 +84,28 @@ value class AssistantId(val id: String)
 
 @Serializable
 data class RequiredAction(
-  val type: String = "submit_tool_outputs",
-  val submit_tool_outputs: SubmitToolOutputs
+  @SerialName("submit_tool_outputs") val submit_tool_outputs: ToolOutputs
 )
 
 @Serializable
-data class SubmitToolOutputs(
-  val tool_calls: List<ToolCall>
+data class ToolOutputs(
+  @SerialName("tool_calls") val tool_calls: List<ToolCall>
 )
 
 @Serializable
 data class ToolCall(
-  val id: String,
-  val type: String = "function",
-  val function: FunctionCall
+  @SerialName("id") val id: String,
+  @SerialName("function") val function: FunctionCall
 )
 
 @Serializable
 data class FunctionCall(
-  val name: String,
-  val arguments: String
+  @SerialName("name") val name: String,
+  @SerialName("arguments") val arguments: String
 )
 
-@Serializable
-data class LastError(
-  val code: String,
-  val message: String
-)
+context(Raise<DomainError>, ActionSolver)
+suspend fun Run.solveActions(): List<ToolOutput> =
+  requiredAction?.submit_tool_outputs?.tool_calls
+    ?.let { solve(it) }
+    ?: raise(DomainError.UnknownDomainError("No tool calls"))

@@ -1,8 +1,8 @@
 package com.acv.chat.data.openai.assistant;
 
+import com.acv.chat.data.openai.common.Role
 import com.acv.chat.data.openai.assistant.file.FileId
 import com.acv.chat.data.openai.assistant.runs.ThreadId
-import com.acv.chat.data.openai.assistant.thread.Role
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -21,7 +21,7 @@ data class ThreadMessage(
 
 @Serializable
 @JvmInline
-value class MessageId(public val id: String)
+value class MessageId(val id: String)
 
 
 @Serializable(with = MessageContentSerializer::class)

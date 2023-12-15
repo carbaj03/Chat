@@ -2,7 +2,8 @@ package com.acv.chat.data.openai.assistant.step
 
 import arrow.core.raise.Raise
 import arrow.core.raise.ensure
-import com.acv.chat.arrow.error.onError
+import com.acv.chat.arrow.error.catch
+import com.acv.chat.data.openai.assistant.beta
 import com.acv.chat.domain.DomainError
 import io.ktor.client.call.body
 import io.ktor.client.request.get
@@ -11,8 +12,10 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
+import com.acv.chat.data.openai.common.OpenAIClient
+import com.acv.chat.data.openai.chat.Counter
 
-context(com.acv.chat.data.openai.chat.Counter, com.acv.chat.data.openai.OpenAIClient)
+context(Counter, OpenAIClient)
 class RunStepApi {
 
   context(Raise<DomainError>)
@@ -20,13 +23,13 @@ class RunStepApi {
     threadId: String,
     runId: String,
     stepId: String
-  ): RunStepObjectBeta =
-    onError(
-      onError = { raise(DomainError.UnknownDomainError(it)) }
+  ): RunStep =
+    catch(
+      onError = DomainError::UnknownDomainError
     ) {
 
       val response = client.get("threads/$threadId/runs/$runId/steps/$stepId") {
-        headers {  append("OpenAI-Beta", "assistants=v1")  }
+        headers {  beta()  }
         contentType(ContentType.Application.Json)
       }
 
@@ -34,6 +37,6 @@ class RunStepApi {
         raise(DomainError.NetworkDomainError(response.status.value, response.bodyAsText()))
       }
 
-      response.body<RunStepObjectBeta>()
+      response.body()
     }
 }

@@ -21,10 +21,10 @@ import com.acv.chat.components.input.OutlinedInput
 
 @optics data class BottomBar(
   val input: OutlinedInput,
-  val gallery: ButtonIcon,
-  val photo: ButtonIcon,
-  val audio: ButtonIcon,
-  val translation: ButtonIcon,
+  val galleryButton: ButtonIcon,
+  val photoButton: ButtonIcon,
+  val audioButton: ButtonIcon,
+  val translationButton: ButtonIcon,
   val send: ButtonIcon,
 ) {
   companion object
@@ -48,10 +48,10 @@ operator fun BottomBar.invoke(modifier: Modifier = Modifier) {
       horizontalArrangement = Arrangement.Start,
       verticalAlignment = Alignment.CenterVertically,
       content = {
-        gallery()
-        photo()
-        audio()
-        translation()
+        galleryButton()
+        photoButton()
+        audioButton()
+        translationButton()
 
         Spacer(modifier = Modifier.weight(1f))
 

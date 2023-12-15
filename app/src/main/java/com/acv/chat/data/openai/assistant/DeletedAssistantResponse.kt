@@ -4,7 +4,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class DeletedAssistantResponse(
-    val id: String,
-    val `object`: String,
-    val deleted: Boolean
+  val id: String,
+  val deleted: Boolean
 )

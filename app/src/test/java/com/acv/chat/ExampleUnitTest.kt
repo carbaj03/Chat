@@ -20,6 +20,7 @@ import com.acv.chat.domain.AppOptics
 import com.acv.chat.domain.DependenciesMock
 import com.acv.chat.domain.DomainError
 import com.acv.chat.domain.Media
+import com.acv.chat.domain.NavigatorImpl
 import com.acv.chat.domain.PhotoServiceMock
 import com.acv.chat.domain.Store
 import com.acv.chat.domain.screen
@@ -42,11 +43,6 @@ import org.junit.Assert
 import org.junit.Test
 import kotlin.experimental.ExperimentalTypeInference
 
-/**
- * Example local unit test, which will execute on the development machine (host).
- *
- * See [testing documentation](http://d.android.com/tools/testing).
- */
 class ExampleUnitTest {
 
   @OptIn(ExperimentalCoroutinesApi::class)

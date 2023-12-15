@@ -49,7 +49,7 @@ android {
     buildConfig = true
   }
   composeOptions {
-    kotlinCompilerExtensionVersion = "1.5.3"
+    kotlinCompilerExtensionVersion = "1.5.6"
   }
   packaging {
     resources {
@@ -81,6 +81,7 @@ dependencies {
   implementation(libs.coil)
 
   implementation(libs.arrow.optics)
+  implementation(libs.androidx.navigation.compose)
   ksp(libs.arrow.optics.ksp)
 
   implementation(libs.kotlinx.datetime)
@@ -94,6 +95,10 @@ dependencies {
   implementation(libs.ktor.client.auth)
   implementation(libs.ktor.client.contentNegotiation)
   implementation(libs.ktor.serialization.json)
+
+  implementation(platform(libs.firebase.bom))
+  implementation(libs.firebase.crashlytics)
+  implementation(libs.firebase.analytics)
 
   testImplementation(libs.junit)
   testImplementation(libs.kotlinx.coroutines.test)

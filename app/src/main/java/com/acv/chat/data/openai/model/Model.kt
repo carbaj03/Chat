@@ -1,6 +1,6 @@
 package com.acv.chat.data.openai.model
 
-import com.acv.chat.data.openai.ModelId
+import com.acv.chat.data.openai.common.ModelId
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 

@@ -3,16 +3,19 @@ package com.acv.chat.domain
 import android.content.Context
 import android.media.MediaRecorder
 import android.os.Build
-import android.util.Log
 import arrow.core.raise.Raise
-import com.acv.chat.arrow.error.onError
+import com.acv.chat.arrow.error.catch
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import java.io.File
 
 interface AudioRecorder {
   val isRecording: Boolean
 
   context(Raise<DomainError>)
-  suspend fun startRecording()
+  suspend fun startRecording(): Flow<Int>
 
   context(Raise<DomainError>)
   suspend fun stopRecording(): Audio
@@ -23,9 +26,10 @@ class AudioRecorderMock : AudioRecorder {
   override val isRecording: Boolean get() = _isRecording
 
   context(Raise<DomainError>)
-  override suspend fun startRecording() {
-    _isRecording = true
-  }
+  override suspend fun startRecording(): Flow<Int> =
+    flowOf(0).also {
+      _isRecording = true
+    }
 
   context(Raise<DomainError>)
   override suspend fun stopRecording(): Audio =
@@ -54,27 +58,34 @@ class AndroidAudioRecorder(
       setOutputFile(file)
     }
 
-  override val isRecording: Boolean get() = file != null
+  override val isRecording: Boolean
+    get() = file != null
 
   context(Raise<DomainError>)
-  override suspend fun startRecording(): Unit = onError(onError = DomainError::UnknownDomainError) {
-    val file = createFile()
-    recorder = mediaRecorder(file).apply {
-      prepare()
-      start()
+  override suspend fun startRecording(): Flow<Int> = flow {
+    catch(onError = DomainError::UnknownDomainError) {
+      val file = createFile()
+      recorder = mediaRecorder(file).apply {
+        prepare()
+        start()
+      }
+      while (isRecording) {
+        delay(500)
+        emit(recorder!!.maxAmplitude)
+      }
+      this@AndroidAudioRecorder.file = file
     }
-    this.file = file
-
   }
 
   context(Raise<DomainError>)
-  override suspend fun stopRecording(): Audio = onError(onError = DomainError::UnknownDomainError) {
-    file ?: throw Exception("There is not recording to stop")
-    recorder!!.stop()
-    recorder!!.reset()
-    recorder!!.release()
-    recorder = null
-    if (file!!.length().also { Log.e("Size", it.toString()) } >= 26214400) throw Exception("File is too big")
-    Audio(file!!.absolutePath).also { file = null }
-  }
+  override suspend fun stopRecording(): Audio =
+    catch(onError = DomainError::UnknownDomainError) {
+      file ?: throw Exception("There is not recording to stop")
+      recorder!!.stop()
+      recorder!!.reset()
+      recorder!!.release()
+      recorder = null
+      if (file!!.length() >= 26214400) throw Exception("File is too big")
+      Audio(file!!.absolutePath).also { file = null }
+    }
 }

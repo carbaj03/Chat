@@ -1,4 +1,4 @@
-package com.acv.chat.data.openai
+package com.acv.chat.data.openai.common
 
 import kotlinx.serialization.Serializable
 

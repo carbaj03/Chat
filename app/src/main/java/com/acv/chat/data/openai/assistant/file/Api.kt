@@ -2,9 +2,11 @@ package com.acv.chat.data.openai.assistant.file
 
 import arrow.core.raise.Raise
 import arrow.core.raise.ensure
+import com.acv.chat.arrow.error.catch
+import com.acv.chat.data.openai.common.OpenAIClient
 import com.acv.chat.data.openai.assistant.SortOrder
+import com.acv.chat.data.openai.assistant.beta
 import com.acv.chat.data.openai.assistant.runs.AssistantId
-import com.acv.chat.data.openai.OpenAIClient
 import com.acv.chat.domain.DomainError
 import io.ktor.client.call.body
 import io.ktor.client.request.delete
@@ -19,7 +21,6 @@ import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
-import com.acv.chat.arrow.error.onError
 
 context(com.acv.chat.data.openai.chat.Counter, OpenAIClient)
 class FileAssistantApi {
@@ -29,15 +30,15 @@ class FileAssistantApi {
     assistantId: AssistantId,
     fileId: FileId
   ): AssistantFile =
-    onError(
-      onError = { raise(DomainError.UnknownDomainError(it)) }
+    catch(
+      onError = DomainError::UnknownDomainError
     ) {
       val request = buildJsonObject { put("file", fileId.id) }
 
       val response = client.post("assistants/${assistantId.id}") {
         setBody(request)
         contentType(ContentType.Application.Json)
-        headers { append("OpenAI-Beta", "assistants=v1") }
+        headers { beta() }
       }
 
       ensure(response.status.isSuccess()) {
@@ -46,18 +47,18 @@ class FileAssistantApi {
 
       response.body()
     }
-
+  
   context(Raise<DomainError>)
   suspend fun delete(
     assistantId: AssistantId,
     fileId: FileId
   ): FileDeletedEvent =
-    onError(
-      onError = { raise(DomainError.UnknownDomainError(it)) }
+    catch(
+      onError = DomainError::UnknownDomainError
     ) {
       val response = client.delete("assistants/${assistantId.id}/files/${fileId.id}") {
         contentType(ContentType.Application.Json)
-        headers { append("OpenAI-Beta", "assistants=v1") }
+        headers { beta() }
       }
       ensure(response.status.isSuccess()) {
         raise(DomainError.NetworkDomainError(response.status.value, response.bodyAsText()))
@@ -71,12 +72,12 @@ class FileAssistantApi {
     assistantId: AssistantId,
     fileId: FileId
   ): AssistantFile =
-    onError(
-      onError = { raise(DomainError.UnknownDomainError(it)) }
+    catch(
+      onError = DomainError::UnknownDomainError
     ) {
       val response = client.get("assistants/${assistantId.id}/files/${fileId.id}") {
         contentType(ContentType.Application.Json)
-        headers { append("OpenAI-Beta", "assistants=v1") }
+        headers { beta() }
       }
 
       ensure(response.status.isSuccess()) {
@@ -94,8 +95,8 @@ class FileAssistantApi {
     after: String?,
     before: String?
   ): List<AssistantFile> =
-    onError(
-      onError = { raise(DomainError.UnknownDomainError(it)) }
+    catch(
+      onError = DomainError::UnknownDomainError
     ) {
       val response = client.get("assistants/${id.id}/files") {
         url {
@@ -105,7 +106,7 @@ class FileAssistantApi {
           before?.let { parameter("before", it) }
         }
         contentType(ContentType.Application.Json)
-        headers { append("OpenAI-Beta", "assistants=v1") }
+        headers { beta() }
       }
 
       ensure(response.status.isSuccess()) {

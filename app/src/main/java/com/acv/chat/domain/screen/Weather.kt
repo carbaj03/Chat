@@ -15,6 +15,7 @@ import com.acv.chat.domain.App
 import com.acv.chat.domain.AppOptics
 import com.acv.chat.domain.AssistantWeather
 import com.acv.chat.domain.DocumentService
+import com.acv.chat.domain.DomainError
 import com.acv.chat.domain.Store
 import com.acv.chat.domain.screen
 import okio.source
@@ -25,41 +26,39 @@ import okio.source
   val upload: ButtonIcon,
   val weather: Text,
   val error: String? = null,
-  override val create: () -> Unit,
-  override val update: () -> Unit,
   override val destroy: () -> Unit
 ) : Screen {
   companion object
 }
 
-
 context(AppOptics, Store<App>, AssistantWeather, DocumentService)
-fun WeatherScreen(): Weather = screen.weather {
+fun WeatherScreen(): Weather =
+  screen.weather {
 
-  Weather(
-    topBar = TopBar(
-      title = Text("Weather")
-    ),
-    buttonIcon = ButtonIcon(
-      icon = Icon.Translate,
-      onClick = onClick(
-        onError = { weather.value set "error" }
-      ) {
-        weather.value set getWeather()
-      }
-    ),
-    upload = ButtonIcon(
-      icon = Icon.Gallery,
-      onClick = onClick {
-        updateAssistant(pickDocument().file.source())
-      }
-    ),
-    weather = Text(""),
-    create = { },
-    update = { },
-    destroy = { }
-  )
-}
+    Weather(
+      topBar = TopBar(
+        title = Text("Weather")
+      ),
+      buttonIcon = ButtonIcon(
+        icon = Icon.Translate,
+        onClick = onClick(
+          action = { weather.value set getWeather("Madrid") },
+          onError = {
+            if (it is DomainError.UnknownDomainError) weather.value set it.error
+            else weather.value set "error"
+          }
+        )
+      ),
+      upload = ButtonIcon(
+        icon = Icon.Gallery,
+        onClick = onClick {
+          updateAssistant(pickDocument().file.source())
+        }
+      ),
+      weather = Text(""),
+      destroy = { }
+    )
+  }
 
 @Composable
 operator fun Weather.invoke() {
