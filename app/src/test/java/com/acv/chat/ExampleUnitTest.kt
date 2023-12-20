@@ -7,11 +7,11 @@ import com.acv.chat.arrow.optics.get
 import com.acv.chat.arrow.optics.getOrNull
 import com.acv.chat.arrow.optics.invoke
 import com.acv.chat.arrow.optics.last
-import com.acv.chat.components.audio
-import com.acv.chat.components.gallery
+import com.acv.chat.components.audioButton
+import com.acv.chat.components.galleryButton
 import com.acv.chat.components.input.text
 import com.acv.chat.components.onClick
-import com.acv.chat.components.photo
+import com.acv.chat.components.photoButton
 import com.acv.chat.components.send
 import com.acv.chat.components.text
 import com.acv.chat.components.value
@@ -26,7 +26,6 @@ import com.acv.chat.domain.Store
 import com.acv.chat.domain.screen
 import com.acv.chat.domain.screen.Screen
 import com.acv.chat.domain.screen.bottomBar
-import com.acv.chat.domain.screen.create
 import com.acv.chat.domain.screen.destroy
 import com.acv.chat.domain.screen.error
 import com.acv.chat.domain.screen.files
@@ -55,21 +54,20 @@ class ExampleUnitTest {
       navigator.toHome()
 
       screen.home test {
-        create()
         advanceUntilIdle()
         messages.last().text.value assert "Hola My Friend"
         input.text.value set "abc"
         advanceUntilIdle()
-        bottomBar.gallery.onClick()
+        bottomBar.galleryButton.onClick()
         advanceUntilIdle()
         files assertOn { size == 1 }
-        bottomBar.photo.onClick()
+        bottomBar.photoButton.onClick()
         advanceUntilIdle()
         files assertOn { size == 2 && last() is Media.Image }
-        bottomBar.audio.onClick()
+        bottomBar.audioButton.onClick()
         advanceUntilIdle()
         input.text.value assert "abc"
-        bottomBar.audio.onClick()
+        bottomBar.audioButton.onClick()
         advanceUntilIdle()
         input.text.value assert "abc asfdsadf"
         bottomBar.send.onClick()
@@ -90,7 +88,7 @@ class ExampleUnitTest {
       navigator.toHome()
 
       screen.home test {
-        bottomBar.photo.onClick()
+        bottomBar.photoButton.onClick()
         advanceTimeBy(1000)
         error assertOn { isNotEmpty() }
         advanceTimeBy(5)

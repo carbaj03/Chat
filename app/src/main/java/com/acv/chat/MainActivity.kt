@@ -4,24 +4,22 @@ import android.Manifest
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.app.ActivityCompat
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.acv.chat.components.Surface
 import com.acv.chat.components.Theme
 import com.acv.chat.domain.App
 import com.acv.chat.domain.screen.Chat
 import com.acv.chat.domain.screen.Search2
+import com.acv.chat.domain.screen.Settings
 import com.acv.chat.ui.theme.invoke
 
 class MainActivity : ComponentActivity() {
@@ -32,13 +30,103 @@ class MainActivity : ComponentActivity() {
     ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECORD_AUDIO), 0)
 
     setContent {
-      var search by remember { mutableStateOf(false) }
       val navController = rememberNavController()
-      Box(Modifier.fillMaxSize()) {
+      NavHost(navController = navController, startDestination = "chat") {
+        composable("chat",
+          enterTransition = {
+            slideIntoContainer(
+              towards = AnimatedContentTransitionScope.SlideDirection.Companion.Left,
+              animationSpec = tween(200)
+            )
+          },
+          exitTransition = {
+            slideOutOfContainer(
+              towards = AnimatedContentTransitionScope.SlideDirection.Companion.Left,
+              animationSpec = tween(200)
+            )
+          },
+          popEnterTransition = {
+            slideIntoContainer(
+              towards = AnimatedContentTransitionScope.SlideDirection.Companion.Right,
+              animationSpec = tween(200)
+            )
+          },
+          popExitTransition = {
+            slideOutOfContainer(
+              towards = AnimatedContentTransitionScope.SlideDirection.Companion.Right,
+              animationSpec = tween(200)
+            )
+          }
+        ) {
+          Chat(
+            onMenuClick = { navController.navigate("search") },
+            onSettingsClick = { navController.navigate("settings") },
+          )
+        }
 
-        Chat(navigate = { search = true })
-        AnimatedVisibility(search) {
-          Search2(onBackClick = { search = false })
+        composable(
+          route = "search",
+          enterTransition = {
+            slideIntoContainer(
+              towards = AnimatedContentTransitionScope.SlideDirection.Companion.Left,
+              animationSpec = tween(200)
+            )
+          },
+          exitTransition = {
+            slideOutOfContainer(
+              towards = AnimatedContentTransitionScope.SlideDirection.Companion.Right,
+              animationSpec = tween(200)
+            )
+          },
+          popEnterTransition = {
+            slideIntoContainer(
+              towards = AnimatedContentTransitionScope.SlideDirection.Companion.Right,
+              animationSpec = tween(200)
+            )
+          },
+          popExitTransition = {
+            slideOutOfContainer(
+              towards = AnimatedContentTransitionScope.SlideDirection.Companion.Right,
+              animationSpec = tween(200)
+            )
+          }
+        ) {
+          Search2(
+            onBackClick = { navController.popBackStack() }
+          )
+        }
+
+        composable(
+          route = "settings",
+          enterTransition = {
+            slideIntoContainer(
+              towards = AnimatedContentTransitionScope.SlideDirection.Companion.Left,
+              animationSpec = tween(200)
+            )
+          },
+          exitTransition = {
+            slideOutOfContainer(
+              towards = AnimatedContentTransitionScope.SlideDirection.Companion.Left,
+              animationSpec = tween(200)
+            )
+          },
+          popEnterTransition = {
+            slideIntoContainer(
+              towards = AnimatedContentTransitionScope.SlideDirection.Companion.Right,
+              animationSpec = tween(200)
+            )
+          },
+          popExitTransition = {
+            slideOutOfContainer(
+              towards = AnimatedContentTransitionScope.SlideDirection.Companion.Right,
+              animationSpec = tween(200)
+            )
+          }
+
+        ) {
+          Settings(
+            onBackClick = { navController.popBackStack() },
+          )
         }
       }
 //      val di = rememberDependencies()
