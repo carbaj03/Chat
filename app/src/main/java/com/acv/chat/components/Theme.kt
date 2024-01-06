@@ -9,7 +9,7 @@ import arrow.optics.optics
 
   @optics data class Dark(
     override val surface: Surface = Surface(),
-    override val colors: Colors = Colors(),
+    override val colors: Colors = darkColors,
     override val typography: Typography = Typography()
   ) : Theme {
     companion object
@@ -17,7 +17,7 @@ import arrow.optics.optics
 
   @optics data class Light(
     override val surface: Surface = Surface(),
-    override val colors: Colors = Colors(),
+    override val colors: Colors = lightColors,
     override val typography: Typography = Typography()
   ) : Theme {
     companion object

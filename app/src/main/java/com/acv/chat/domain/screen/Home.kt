@@ -293,7 +293,7 @@ operator fun Home.invoke() {
                       contentDescription = null
                     )
                   }
-                  is Media.Pdf -> androidx.compose.material3.Text("PDF ${file.file.name}")
+                  is Media.Pdf -> androidx.compose.material3.Text("PDF ${file.file}")
                 }
               }
             }

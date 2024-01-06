@@ -38,17 +38,17 @@ class ComposeFileProvider : FileProvider(R.xml.filepaths) {
 context(Raise<DomainError>)
 suspend fun Media.Image.toUri(context: Context): Uri = suspendCancellableCoroutine { cc ->
   catch(DomainError::UnknownDomainError) {
-    cc.resume(FileProvider.getUriForFile(context, context.fileProvider, file))
+    cc.resume(FileProvider.getUriForFile(context, context.fileProvider, File(file)))
   }
 }
 
 context(Raise<DomainError>)
 suspend fun Media.Image.from(context: Context, uri: Uri): Media.Image =
-  Media.Image(file.from(context, uri))
+  Media.Image(File(file).from(context, uri).path)
 
 context(Raise<DomainError>)
 suspend fun Media.Pdf.from(context: Context, uri: Uri): Media.Pdf =
-  Media.Pdf(file.from(context, uri))
+  Media.Pdf(File(file).from(context, uri).path)
 
 context(Raise<DomainError>)
 suspend fun File.from(context: Context, uri: Uri): File = suspendCancellableCoroutine {
@@ -72,11 +72,11 @@ fun rememberFileProvider(): TempFileProvider {
 
     context(Raise<DomainError>)
     override suspend fun getImage(): Media.Image =
-      Media.Image(TempFile("images", ".jpg"))
+      Media.Image(TempFile("images", ".jpg").path)
 
     context(Raise<DomainError>)
     override suspend fun getDocument(): Media.Pdf =
-      Media.Pdf(TempFile("docs", ".pdf"))
+      Media.Pdf(TempFile("docs", ".pdf").path)
 
     context(Raise<DomainError>)
     private suspend fun TempFile(folder: String, suffix: String): File = suspendCancellableCoroutine {

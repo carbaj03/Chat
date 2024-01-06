@@ -22,7 +22,7 @@ class DocumentServiceMock : DocumentService {
 
   context(Raise<DomainError>)
   override suspend fun pickDocument(): Media.Pdf {
-    return Media.Pdf(File(""))
+    return Media.Pdf("")
   }
 }
 
@@ -48,11 +48,4 @@ fun rememberDocumentLauncher(fileProvider: TempFileProvider): DocumentService {
       }
     }
   }
-}
-
-sealed interface Media {
-  val file: File
-
-  data class Pdf(override val file: File) : Media
-  data class Image(override val file: File) : Media
 }

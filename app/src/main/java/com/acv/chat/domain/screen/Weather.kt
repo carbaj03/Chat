@@ -19,6 +19,7 @@ import com.acv.chat.domain.DomainError
 import com.acv.chat.domain.Store
 import com.acv.chat.domain.screen
 import okio.source
+import java.io.File
 
 @optics data class Weather(
   val topBar: TopBar,
@@ -52,7 +53,7 @@ fun WeatherScreen(): Weather =
       upload = ButtonIcon(
         icon = Icon.Gallery,
         onClick = onClick {
-          updateAssistant(pickDocument().file.source())
+          updateAssistant(File(pickDocument().file).source())
         }
       ),
       weather = Text(""),

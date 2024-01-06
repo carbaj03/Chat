@@ -1,5 +1,6 @@
 package com.acv.chat.components
 
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -29,27 +30,18 @@ sealed interface TextStyle {
 @Composable
 operator fun TextStyle.invoke(): androidx.compose.ui.text.TextStyle =
   when (this) {
-    TextStyle.Body -> style
-    TextStyle.BodyLarge -> style
-    TextStyle.H1 -> style
-    TextStyle.H2 -> style
-    TextStyle.H3 -> style
-    TextStyle.Title -> style
-    TextStyle.TitleLarge -> style
-    TextStyle.TitleSmall -> style
-    TextStyle.Label -> style
-    TextStyle.Display -> style
-    TextStyle.BodySmall -> style
+    TextStyle.Body -> MaterialTheme.typography.bodyMedium
+    TextStyle.BodyLarge -> MaterialTheme.typography.bodyLarge
+    TextStyle.BodySmall -> MaterialTheme.typography.bodySmall
+    TextStyle.H1 -> MaterialTheme.typography.headlineSmall
+    TextStyle.H2 -> MaterialTheme.typography.headlineMedium
+    TextStyle.H3 -> MaterialTheme.typography.headlineLarge
+    TextStyle.Title -> MaterialTheme.typography.titleMedium
+    TextStyle.TitleLarge -> MaterialTheme.typography.titleLarge
+    TextStyle.TitleSmall -> MaterialTheme.typography.titleSmall
+    TextStyle.Label -> MaterialTheme.typography.labelMedium
+    TextStyle.Display -> MaterialTheme.typography.displayMedium
   }
-
-internal val TextStyle.style
-  get() = DefaultTextStyle.copy(
-    fontFamily = FontFamily.SansSerif,
-    fontWeight = FontWeight.Normal,
-    fontSize = 14.sp,
-    lineHeight = 20.0.sp,
-    letterSpacing = 0.2.sp,
-  )
 
 internal val DefaultTextStyle =
   androidx.compose.ui.text.TextStyle.Default.copy(platformStyle = PlatformTextStyle(includeFontPadding = true))

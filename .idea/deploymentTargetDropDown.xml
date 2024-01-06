@@ -2,9 +2,6 @@
 <project version="4">
   <component name="deploymentTargetDropDown">
     <value>
-      <entry key="Chat">
-        <State />
-      </entry>
       <entry key="ChatPreview">
         <State>
           <runningDeviceTargetSelectedWithDropDown>
@@ -22,6 +19,9 @@
         </State>
       </entry>
       <entry key="MainActivity">
+        <State />
+      </entry>
+      <entry key="OptionItemPreview">
         <State />
       </entry>
       <entry key="app">

@@ -23,7 +23,7 @@ interface MediaService {
 class MediaServiceMock : MediaService {
 
   override suspend fun pickFromGallery(): Media.Image =
-    Media.Image(File(""))
+    Media.Image("")
 }
 
 @Composable

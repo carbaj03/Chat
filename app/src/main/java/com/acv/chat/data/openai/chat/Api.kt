@@ -96,7 +96,7 @@ class ChatApi : ChatService {
           it.forEach {
             when (it) {
               is Media.Image -> {
-                val img = Base64.encodeToString(it.file.readBytes(), Base64.DEFAULT)
+                val img = Base64.encodeToString(File(it.file).readBytes(), Base64.DEFAULT)
                 add(ImagePart("data:image/jpeg;base64,$img"))
               }
               is Media.Pdf -> {

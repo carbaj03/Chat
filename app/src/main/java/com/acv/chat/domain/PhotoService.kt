@@ -48,6 +48,6 @@ class PhotoServiceMock(private val file: File? = File("")) : PhotoService {
 
   context(Raise<DomainError>)
   override suspend fun takePhoto(): Media.Image =
-    file?.let { Media.Image(it) }
+    file?.let { Media.Image(it.path) }
       ?: raise(DomainError.UnknownDomainError("Photo not taken"))
 }
