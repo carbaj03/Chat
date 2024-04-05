@@ -19,7 +19,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -103,7 +103,7 @@ fun SearchDrawer(
             contentDescription = null
           )
         }
-        Divider()
+        HorizontalDivider()
       }
 
       items(history) {
@@ -123,7 +123,7 @@ fun SearchDrawer(
 
     }
 
-    Divider()
+    HorizontalDivider()
 
     Row(
       modifier = Modifier.clickable { onSettingsClick() }.padding(16.dp),

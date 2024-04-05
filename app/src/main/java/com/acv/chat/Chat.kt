@@ -1,20 +1,12 @@
 package com.acv.chat
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.add
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContentPadding
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.DismissibleDrawerSheet
 import androidx.compose.material3.DismissibleNavigationDrawer
 import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
@@ -66,5 +58,5 @@ fun Chat(
   }
 }
 
-private fun calculateFraction(a: Float, b: Float, pos: Float) =
-  ((pos - a) / (b - a)).coerceIn(0f, 1f)
+private fun calculateFraction(min: Float, max: Float, current: Float): Float =
+  ((current - min) / (max - min)).coerceIn(0f, 1f)

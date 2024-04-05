@@ -14,9 +14,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -143,7 +143,7 @@ fun RowScope.Actions(
           selected = false,
           icon = R.drawable.ic_share_24
         )
-        Divider()
+        HorizontalDivider()
         OptionItem(
           text = "Rename",
           onClick = { menu = false },
@@ -181,7 +181,7 @@ fun ColumnScope.NewMemu(
     selected = false,
     icon = R.drawable.ic_info_outline_24
   )
-  Divider()
+  HorizontalDivider()
   OptionItem(
     text = "GPT-3.5",
     onClick = onChangeModelClick,

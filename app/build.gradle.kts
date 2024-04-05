@@ -79,9 +79,9 @@ dependencies {
   implementation(libs.ui.tooling.preview)
   implementation(libs.material3)
   implementation(libs.coil)
+  implementation(libs.androidx.navigation.compose)
 
   implementation(libs.arrow.optics)
-  implementation(libs.androidx.navigation.compose)
   ksp(libs.arrow.optics.ksp)
 
   implementation(libs.kotlinx.datetime)
